@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build SFML 2.6.0",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "if (!(Test-Path output)) { New-Item -ItemType Directory -Path output | Out-Null }; g++ C:/game2/Platformer/src/*.cpp -I\"C:/game2/Platformer/include\" -I\"C:/game2/SFML-2.6.0/include\" -L\"C:/game2/SFML-2.6.0/lib\" -lsfml-graphics -lsfml-window -lsfml-system -mconsole -o output/main.exe; if ($?) { Copy-Item \"C:/game2/SFML-2.6.0/bin/*.dll\" output/ -Force; Copy-Item \"C:/game2/Platformer/assets\" output/ -Recurse -Force; Start-Process -NoNewWindow ./output/main.exe -WorkingDirectory ./output }"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}
