@@ -8,7 +8,7 @@ Game::Game() :
     currentState(GameState::MENU),
     fontLoaded(false)
 {
-    window.create(sf::VideoMode(1200, 800), "Platformer Adventure");
+    window.create(sf::VideoMode(1200, 800), "game test");
     window.setFramerateLimit(60);
     camera.setSize(1200.f, 800.f); camera.setCenter(600.f, 400.f);
     uiView.setSize(1200.f, 800.f); uiView.setCenter(600.f, 400.f);
