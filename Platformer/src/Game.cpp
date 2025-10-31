@@ -17,18 +17,14 @@ Game::Game() :
 
 Game::~Game() {}
 
-// *** HÀM INITIALIZE ĐÃ SỬA LỖI ***
 void Game::initialize() {
     std::cout << "=== Initializing Game ===\n";
     loadResources(); // Tải TẤT CẢ tài nguyên (bao gồm font của Game)
     
     menu = std::make_unique<Menu>();
     
-    // Cung cấp đường dẫn font cho Menu
-    // (Menu sẽ tự tải font riêng của nó, không ảnh hưởng đến font của Game)
-    std::string menuFontPath = "assets/fonts/arial.ttf";
-    if (!menu->loadFont(menuFontPath)) { // Thử tải font tương đối
-        // Nếu thất bại, thử tải font hệ thống
+    std::string menuFontPath = "assets/fonts/arial.ttf"; // Ưu tiên
+    if (!menu->loadFont(menuFontPath)) { 
         std::cout << "Menu failed to load relative font, trying system font..." << std::endl;
         menu->loadFont("C:\\Windows\\Fonts\\arial.ttf"); 
     }
@@ -36,7 +32,6 @@ void Game::initialize() {
     menu->initialize();
     std::cout << "Game initialized!\n";
 }
-
 
 void Game::loadResources() {
     // 1. Load background chính
@@ -87,11 +82,13 @@ void Game::loadResources() {
 
     // 4. Load font
     std::vector<std::string> fontPaths = {
-        "assets/fonts/arial.ttf", // Ưu tiên tải font từ thư mục game
-        "C:\\Windows\\Fonts\\arial.ttf" // Đường dẫn dự phòng
+        "assets/fonts/arial.ttf", // Ưu tiên: Copy arial.ttf vào đây
+        "C:\\Windows\\Fonts\\arial.ttf", // Windows
+        "/System/Library/Fonts/Arial.ttf", // macOS
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" // Linux fallback
     };
     
-    fontLoaded = false; // Gán cho biến thành viên (member variable)
+    fontLoaded = false; // Gán cho biến thành viên
     
     for (const auto& path : fontPaths) {
         std::cout << "Trying font: " << path << "... ";
@@ -107,90 +104,87 @@ void Game::loadResources() {
         std::cerr << "✗ ERROR: Font NOT FOUND! UI text might not display.\n";
     }
 
-    // --- 5. Setup UI Text (ĐÃ SỬA LỖI THỨ TỰ) ---
+    // 5. Setup UI Text (dùng chữ)
     if (fontLoaded) {
         // Setup gameOverText
-        gameOverText.setFont(font); // <-- SET FONT TRƯỚC
+        gameOverText.setFont(font); 
         gameOverText.setString("GAME OVER");
         gameOverText.setCharacterSize(72);
         gameOverText.setFillColor(sf::Color::Red);
-        sf::FloatRect boundsGO = gameOverText.getLocalBounds(); // <-- Lấy bounds SAU
+        sf::FloatRect boundsGO = gameOverText.getLocalBounds();
         gameOverText.setOrigin(boundsGO.width / 2.f, boundsGO.height / 2.f);
         gameOverText.setPosition(600.f, 250.f);
 
         // Setup winText
-        winText.setFont(font); // <-- SET FONT TRƯỚC
+        winText.setFont(font); 
         winText.setString("YOU WIN!");
         winText.setCharacterSize(72);
         winText.setFillColor(sf::Color::Green);
-        sf::FloatRect boundsWin = winText.getLocalBounds(); // <-- Lấy bounds SAU
+        sf::FloatRect boundsWin = winText.getLocalBounds();
         winText.setOrigin(boundsWin.width / 2.f, boundsWin.height / 2.f);
         winText.setPosition(600.f, 250.f);
 
         // Setup restartText
-        restartText.setFont(font); // <-- SET FONT TRƯỚC
+        restartText.setFont(font); 
         restartText.setString("Restart");
         restartText.setCharacterSize(40);
-        restartText.setFillColor(sf::Color::White); // Đổi lại màu trắng (sẽ đổi thành vàng khi hover)
-        sf::FloatRect boundsRst = restartText.getLocalBounds(); // <-- Lấy bounds SAU
+        restartText.setFillColor(sf::Color::White);
+        sf::FloatRect boundsRst = restartText.getLocalBounds();
         restartText.setOrigin(boundsRst.width / 2.f, boundsRst.height / 2.f);
         restartText.setPosition(480.f, 400.f);
 
         // Setup menuText
-        menuText.setFont(font); // <-- SET FONT TRƯỚC
+        menuText.setFont(font); 
         menuText.setString("Menu");
         menuText.setCharacterSize(40);
-        menuText.setFillColor(sf::Color::White); // Đổi lại màu trắng (sẽ đổi thành vàng khi hover)
-        sf::FloatRect boundsMenu = menuText.getLocalBounds(); // <-- Lấy bounds SAU
+        menuText.setFillColor(sf::Color::White);
+        sf::FloatRect boundsMenu = menuText.getLocalBounds();
         menuText.setOrigin(boundsMenu.width / 2.f, boundsMenu.height / 2.f);
         menuText.setPosition(720.f, 400.f);
         
-        std::cout << "✓ UI Texts initialized.\n";
+        std::cout << "✓ UI Texts initialized with font.\n";
     } else {
          std::cerr << "✗ UI Texts NOT initialized due to font loading failure.\n";
-         // Nếu font lỗi, chúng ta vẫn nên setup text để SFML dùng font mặc định
-         // (Code bên dưới lặp lại, nhưng đảm bảo text được tạo)
-         gameOverText.setString("GAME OVER");
-         gameOverText.setCharacterSize(72);
-         gameOverText.setFillColor(sf::Color::Red);
-         sf::FloatRect boundsGO = gameOverText.getLocalBounds();
-         gameOverText.setOrigin(boundsGO.width / 2.f, boundsGO.height / 2.f);
-         gameOverText.setPosition(600.f, 250.f);
-
-         winText.setString("YOU WIN!");
-         winText.setCharacterSize(72);
-         winText.setFillColor(sf::Color::Green);
-         sf::FloatRect boundsWin = winText.getLocalBounds();
-         winText.setOrigin(boundsWin.width / 2.f, boundsWin.height / 2.f);
-         winText.setPosition(600.f, 250.f);
-
-         restartText.setString("Restart");
-         restartText.setCharacterSize(40);
-         restartText.setFillColor(sf::Color::White);
-         sf::FloatRect boundsRst = restartText.getLocalBounds();
-         restartText.setOrigin(boundsRst.width / 2.f, boundsRst.height / 2.f);
-         restartText.setPosition(480.f, 400.f);
-
-         menuText.setString("Menu");
-         menuText.setCharacterSize(40);
-         menuText.setFillColor(sf::Color::White);
-         sf::FloatRect boundsMenu = menuText.getLocalBounds();
-         menuText.setOrigin(boundsMenu.width / 2.f, boundsMenu.height / 2.f);
-         menuText.setPosition(720.f, 400.f);
     }
 }
 
+// *** HÀM CREATELEVEL ĐÃ SỬA ĐỂ DÙNG ground_forest.png ***
 void Game::createLevel() {
     std::cout << "Creating level...\n";
-    platforms.clear(); enemies.clear(); mushrooms.clear();
-    currentState = GameState::PLAYING; // Đặt trạng thái ở đầu
+    platforms.clear(); 
+    enemies.clear(); 
+    mushrooms.clear();
+    currentState = GameState::PLAYING;
 
-    // Platforms (Dùng màu trơn)
-    platforms.push_back(std::make_unique<Platform>(sf::Vector2f(0.f, 740.f), sf::Vector2f(2400.f, 60.f), sf::Color(100, 70, 40)));
-    platforms.push_back(std::make_unique<Platform>(sf::Vector2f(400.f, 600.f), sf::Vector2f(250.f, 30.f), sf::Color(80, 60, 30)));
-    platforms.push_back(std::make_unique<Platform>(sf::Vector2f(700.f, 500.f), sf::Vector2f(200.f, 30.f), sf::Color(80, 60, 30)));
-    platforms.push_back(std::make_unique<Platform>(sf::Vector2f(950.f, 400.f), sf::Vector2f(220.f, 30.f), sf::Color(80, 60, 30)));
-    platforms.push_back(std::make_unique<Platform>(sf::Vector2f(1220.f, 550.f), sf::Vector2f(300.f, 30.f), sf::Color(80, 60, 30)));
+    // Định nghĩa đường dẫn ảnh platform mới
+    std::string platformTexturePath = "assets/ground_forest.png"; 
+
+    platforms.push_back(std::make_unique<Platform>(
+        sf::Vector2f(0.f, 740.f),
+        sf::Vector2f(2400.f, 60.f), // Kích thước platform
+        platformTexturePath 
+    ));
+
+    platforms.push_back(std::make_unique<Platform>(
+        sf::Vector2f(400.f, 600.f),
+        sf::Vector2f(250.f, 30.f),
+        platformTexturePath 
+    ));
+    platforms.push_back(std::make_unique<Platform>(
+        sf::Vector2f(700.f, 500.f),
+        sf::Vector2f(200.f, 30.f),
+        platformTexturePath 
+    ));
+    platforms.push_back(std::make_unique<Platform>(
+        sf::Vector2f(950.f, 400.f),
+        sf::Vector2f(220.f, 30.f),
+        platformTexturePath 
+    ));
+    platforms.push_back(std::make_unique<Platform>(
+        sf::Vector2f(1220.f, 550.f),
+        sf::Vector2f(300.f, 30.f),
+        platformTexturePath 
+    ));
     
     // Player
     player = std::make_unique<Player>();
@@ -437,13 +431,12 @@ void Game::renderGameOver() {
     window.draw(gameOverBackgroundSprite); 
 
     // 2. Vẽ UI (Chữ)
-    // Luôn vẽ text (nếu fontLoaded=false, SFML dùng font mặc định)
-    window.draw(gameOverText); 
-    window.draw(restartText);
-    window.draw(menuText);
-    
-    if (!fontLoaded) {
-         std::cerr << "[DEBUG] Cannot draw GAME OVER text properly: Font not loaded.\n";
+    if (fontLoaded) {
+        window.draw(gameOverText); // Vẽ chữ "GAME OVER"
+        window.draw(restartText);  // Vẽ chữ "Restart"
+        window.draw(menuText);     // Vẽ chữ "Menu"
+    } else {
+        std::cerr << "[DEBUG] Cannot draw GAME OVER text properly: Font not loaded.\n";
     }
 }
 
@@ -462,12 +455,11 @@ void Game::renderWin() {
     window.draw(overlay);
     
     // 3. Vẽ UI (Chữ)
-    // Luôn vẽ text (nếu fontLoaded=false, SFML dùng font mặc định)
-    window.draw(winText);
-    window.draw(restartText);
-    window.draw(menuText);
-    
-    if (!fontLoaded) {
+    if (fontLoaded) {
+        window.draw(winText);     // Vẽ chữ "YOU WIN!"
+        window.draw(restartText); // Vẽ chữ "Restart"
+        window.draw(menuText);    // Vẽ chữ "Menu"
+    } else {
          std::cerr << "[DEBUG] Cannot draw WIN text properly: Font not loaded.\n";
     }
 }
