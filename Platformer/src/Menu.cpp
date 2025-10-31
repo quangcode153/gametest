@@ -35,7 +35,7 @@ void Menu::initialize() {
     
     // Setup title
     titleText.setFont(font);
-    titleText.setString("PLATFORMER ADVENTURE");
+    titleText.setString("GAME TEST");
     titleText.setCharacterSize(72);
     titleText.setFillColor(sf::Color::Green);
     titleText.setStyle(sf::Text::Bold);

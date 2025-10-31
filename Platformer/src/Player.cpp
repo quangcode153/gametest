@@ -12,7 +12,7 @@ Player::Player() :
     facingRight(true),
     velocity(0.f, 0.f),
     moveSpeed(300.0f),
-    jumpStrength(-800.0f),  // <-- ĐÃ TĂNG ĐỘ NHẢY (từ -600 lên -800)
+    jumpStrength(-800.0f),
     gravity(2000.0f),
     maxFallSpeed(700.0f),
     isOnGround(false),

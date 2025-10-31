@@ -15,7 +15,7 @@ enum class GameState {
     PLAYING,
     PAUSED,
     GAME_OVER,
-    WIN // <-- THÊM TRẠNG THÁI NÀY
+    WIN
 };
 
 class Game {
@@ -28,6 +28,10 @@ private:
 
     sf::Texture backgroundTexture;
     sf::Sprite background;
+    
+    // Background cho Game Over
+    sf::Texture gameOverBackgroundTexture;
+    sf::Sprite  gameOverBackgroundSprite;
 
     sf::View camera;
     sf::View uiView;
@@ -42,13 +46,18 @@ private:
     // Font và UI
     sf::Font font;
     sf::Text scoreText; // Giữ lại, có thể dùng cho điểm số
-    sf::Text gameOverText;
-    sf::Text winText; // <-- THÊM BIẾN NÀY ĐỂ HIỂN THỊ CHỮ WIN
-    bool fontLoaded;
+    bool fontLoaded; // Biến thành viên (member variable)
 
     // UI Trái tim
     sf::Texture heartTexture;
     sf::Sprite heartSprite;
+
+    // --- DÙNG TEXT THAY VÌ SPRITE ---
+    sf::Text winText;           // Chữ "YOU WIN!"
+    sf::Text gameOverText;      // Chữ "GAME OVER"
+    sf::Text restartText;       // Chữ "Restart"
+    sf::Text menuText;          // Chữ "Menu"
+    // --- HẾT PHẦN SỬA ---
 
 public:
     Game();
@@ -68,12 +77,12 @@ private:
     void updateMenu();
     void updatePlaying(float deltaTime);
     void updateGameOver();
-    void updateWin(); // <-- THÊM HÀM NÀY
+    void updateWin();
 
     void renderMenu();
     void renderPlaying();
     void renderGameOver();
-    void renderWin(); // <-- THÊM HÀM NÀY
+    void renderWin();
 
     void startGame();
     void restartGame();

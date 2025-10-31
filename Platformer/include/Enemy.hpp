@@ -26,9 +26,6 @@ public:
     bool loadTexture(const std::string& path);
     void setPosition(const sf::Vector2f& pos);
     
-    // (Không cần hàm này nữa)
-    // void setPatrolBounds(float left, float right); 
-    
     sf::Vector2f getPosition() const;
     sf::FloatRect getBounds() const;
     bool isAlive() const { return alive; }
