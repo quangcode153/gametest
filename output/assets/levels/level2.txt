@@ -1,0 +1,31 @@
+# Day la man choi 2
+# Dinh dang: TYPE x y [width height] (width/height chi danh cho PLATFORM)
+
+# Vi tri khoi dau cua nguoi choi cho Level 2
+PLAYER 100 680
+
+# Cac be do
+PLATFORM 0 740 500 60      # Nen dat ben trai
+PLATFORM 600 740 600 60    # Nen dat o giua
+PLATFORM 1300 740 500 60   # Nen dat ben phai
+
+PLATFORM 200 600 150 30    # Be do nho dau tien
+PLATFORM 450 500 150 30    # Be do cao hon
+PLATFORM 700 400 200 30    # Be do tren cao
+PLATFORM 950 300 150 30    # Be do rat cao
+PLATFORM 1100 500 250 30   # Be do dai
+PLATFORM 1400 650 100 30   # Be do cuoi
+PLATFORM 1600 550 150 30   # Be do ben phai cao
+
+# Quai vat
+ENEMY 400 690              # Tren nen dat trai
+ENEMY 700 690              # Tren nen dat giua
+ENEMY 800 350              # Tren be do tren cao
+ENEMY 1200 690             # Tren be do dai
+ENEMY 1700 690             # Tren nen dat phai
+
+# Nam
+MUSHROOM 270 560           # Tren be do dau tien
+MUSHROOM 780 360           # Tren be do tren cao
+MUSHROOM 1180 460          # Tren be do dai
+MUSHROOM 1670 510          # Tren be do ben phai cao

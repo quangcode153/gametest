@@ -39,7 +39,9 @@ private:
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<std::unique_ptr<Platform>> platforms;
     std::vector<std::unique_ptr<Mushroom>> mushrooms;
-
+    
+    int currentLevel;
+    int maxLevels;
     std::unique_ptr<Menu> menu;
 
     sf::Font font;
@@ -63,7 +65,7 @@ public:
 private:
     void initialize();
     void loadResources();
-    void createLevel();
+    void loadLevel(int levelNumber);
 
     void handleEvents();
     void update(float deltaTime);

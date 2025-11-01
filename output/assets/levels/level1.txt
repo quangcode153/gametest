@@ -1,0 +1,25 @@
+# Day la man choi 1
+# Dinh dang Platform: PLATFORM x y width height
+# Dinh dang khac: TYPE x y
+
+# Vi tri khoi dau cua nguoi choi
+PLAYER 200 680
+
+# Nen dat chinh
+PLATFORM 0 740 2400 60
+
+# Cac be do
+PLATFORM 400 600 250 30
+PLATFORM 700 500 200 30
+PLATFORM 950 400 220 30
+PLATFORM 1220 550 300 30
+
+# Quai vat
+ENEMY 525 600
+ENEMY 750 500
+ENEMY 1370 550
+
+# Nam
+MUSHROOM 750 460
+MUSHROOM 1050 360
+MUSHROOM 2000 420

@@ -2,11 +2,15 @@
 #include <iostream>
 #include <numeric>
 #include <algorithm>
+#include <fstream> 
+#include <sstream>
 
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
-    fontLoaded(false)
+    fontLoaded(false),
+    currentLevel(1),
+    maxLevels(2)
 {
     window.create(sf::VideoMode(1200, 800), "game test");
     window.setFramerateLimit(60);
@@ -148,74 +152,83 @@ void Game::loadResources() {
     }
 }
 
+// Trong Game.cpp
 
-void Game::createLevel() {
-    std::cout << "Creating level...\n";
-    platforms.clear(); 
-    enemies.clear(); 
-    mushrooms.clear();
-    currentState = GameState::PLAYING;
+// Hàm loadLevel MỚI
+// Trong Game.cpp
 
-    
-    std::string platformTexturePath = "assets/ground_forest.png"; 
-
-    platforms.push_back(std::make_unique<Platform>(
-        sf::Vector2f(0.f, 740.f),
-        sf::Vector2f(2400.f, 60.f), 
-        platformTexturePath 
-    ));
-
-    platforms.push_back(std::make_unique<Platform>(
-        sf::Vector2f(400.f, 600.f),
-        sf::Vector2f(250.f, 30.f),
-        platformTexturePath 
-    ));
-    platforms.push_back(std::make_unique<Platform>(
-        sf::Vector2f(700.f, 500.f),
-        sf::Vector2f(200.f, 30.f),
-        platformTexturePath 
-    ));
-    platforms.push_back(std::make_unique<Platform>(
-        sf::Vector2f(950.f, 400.f),
-        sf::Vector2f(220.f, 30.f),
-        platformTexturePath 
-    ));
-    platforms.push_back(std::make_unique<Platform>(
-        sf::Vector2f(1220.f, 550.f),
-        sf::Vector2f(300.f, 30.f),
-        platformTexturePath 
-    ));
-    
-    
-    player = std::make_unique<Player>();
-    player->loadTexture("assets/player.png");
-    player->setPosition(sf::Vector2f(200.f, 680.f));
-    
-    
+// Hàm loadLevel MỚI
+void Game::loadLevel(int levelNumber) {
+    std::cout << "Loading level " << levelNumber << "...\n";
+    platforms.clear();
     enemies.clear();
-    {
-        auto enemy1 = std::make_unique<Enemy>(); 
-        if(enemy1->loadTexture("assets/npc.png")) { 
-            enemy1->setPosition({525.f, 600.f}); 
-            enemies.push_back(std::move(enemy1)); 
+    mushrooms.clear();
+    // (Không clear Player, chỉ đặt lại vị trí)
+
+    currentState = GameState::PLAYING; // Đặt trạng thái playing khi tải màn chơi
+
+    std::string levelPath = "assets/levels/level" + std::to_string(levelNumber) + ".txt";
+
+    std::ifstream file(levelPath);
+    if (!file.is_open()) {
+        std::cerr << "!!! LOI: Khong the mo file level: " << levelPath << std::endl;
+        std::cout << "Khong tim thay level, quay ve Menu." << std::endl;
+        currentState = GameState::MENU; // Nếu không tìm thấy file, quay về menu
+        return;
+    }
+
+    // Lấy đường dẫn texture cho platform (CHẮC CHẮN ĐÂY LÀ ĐƯỜNG DẪN ĐÚNG CỦA ANH)
+    std::string platformTexturePath = "assets/ground_forest.png"; 
+    std::string enemyTexturePath = "assets/npc.png";
+    std::string playerTexturePath = "assets/player.png";
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // Bỏ qua dòng trống hoặc dòng ghi chú
+        if (line.empty() || line[0] == '#') {
+            continue;
         }
-        auto enemy2 = std::make_unique<Enemy>(); 
-        if(enemy2->loadTexture("assets/npc.png")) { 
-            enemy2->setPosition({750.f, 500.f}); 
-            enemies.push_back(std::move(enemy2)); 
-        }
-        auto enemy3 = std::make_unique<Enemy>(); 
-        if(enemy3->loadTexture("assets/npc.png")) { 
-            enemy3->setPosition({1370.f, 550.f}); 
-            enemies.push_back(std::move(enemy3)); 
+
+        std::istringstream iss(line);
+        std::string type;
+        float x, y, w, h;
+
+        iss >> type; // Đọc từ đầu tiên (PLAYER, PLATFORM, ...)
+
+        if (type == "PLAYER") {
+            iss >> x >> y;
+            if (player) { // Nếu player đã tồn tại, chỉ đặt lại vị trí
+                player->setPosition({x, y});
+            } else { // Nếu player chưa được tạo (lần đầu tiên game chạy)
+                player = std::make_unique<Player>();
+                player->loadTexture(playerTexturePath);
+                player->setPosition({x, y});
+            }
+        } 
+        else if (type == "PLATFORM") {
+            iss >> x >> y >> w >> h;
+            platforms.push_back(std::make_unique<Platform>(sf::Vector2f(x, y), sf::Vector2f(w, h), platformTexturePath));
+        } 
+        else if (type == "ENEMY") {
+            iss >> x >> y;
+            auto enemy = std::make_unique<Enemy>(); 
+            if (enemy->loadTexture(enemyTexturePath)) { // Dùng đường dẫn texture đã định nghĩa
+                enemy->setPosition({x, y}); 
+                enemies.push_back(std::move(enemy)); 
+            } else {
+                 std::cerr << "!!! LOI: Khong the tai enemy texture: " << enemyTexturePath << std::endl;
+            }
+        } 
+        else if (type == "MUSHROOM") {
+            iss >> x >> y;
+            mushrooms.push_back(std::make_unique<Mushroom>(sf::Vector2f(x, y)));
+        } else {
+            std::cerr << "!!! LOI: Loai doi tuong khong hop le trong file level: " << type << " (dong: " << line << ")" << std::endl;
         }
     }
-    
-    
-    mushrooms.push_back(std::make_unique<Mushroom>(sf::Vector2f(750.f, 460.f)));
-    mushrooms.push_back(std::make_unique<Mushroom>(sf::Vector2f(1050.f, 360.f)));
-    mushrooms.push_back(std::make_unique<Mushroom>(sf::Vector2f(2000.f, 420.f)));
-    std::cout << "Level created!\n";
+
+    file.close();
+    std::cout << "Level " << levelNumber << " loaded!" << std::endl;
 }
 
 void Game::handleEvents() {
@@ -348,8 +361,14 @@ void Game::updatePlaying(float deltaTime) {
         bool allEnemiesDead = std::all_of(enemies.begin(), enemies.end(),
                                         [](const std::unique_ptr<Enemy>& e){ return e && !e->isAlive(); });
         if (allEnemiesDead && !enemies.empty()) {
-            currentState = GameState::WIN;
-            std::cout << "--- Player Wins! State -> WIN ---" << std::endl;
+            currentLevel++;
+            if (currentLevel > maxLevels) {
+                currentState = GameState::WIN; 
+                std::cout << "--- Player Wins! (All levels complete) ---" << std::endl;
+            } else {
+                std::cout << "--- Level complete! Loading level " << currentLevel << " ---" << std::endl;
+                loadLevel(currentLevel);
+            }
         }
     }
 
@@ -464,8 +483,16 @@ void Game::renderWin() {
     }
 }
 
-void Game::startGame() { std::cout << "Starting game...\n"; createLevel(); currentState = GameState::PLAYING; }
-void Game::restartGame() { std::cout << "Restarting game...\n"; createLevel(); currentState = GameState::PLAYING; }
+void Game::startGame() {
+    std::cout << "Starting game...\n";
+    currentLevel = 1;
+    loadLevel(currentLevel);
+    currentState = GameState::PLAYING;
+}
+void Game::restartGame() { 
+    std::cout << "Restarting game...\n"; 
+    loadLevel(currentLevel);
+    currentState = GameState::PLAYING; }
 void Game::returnToMenu() { std::cout << "Returning to menu...\n"; currentState = GameState::MENU; }
 
 void Game::run() {
