@@ -23,7 +23,6 @@ private:
     
     // Background
     sf::RectangleShape background;
-    
     // Animation
     float animationTimer;
 

@@ -1,7 +1,6 @@
 #include "Platform.hpp"
 #include <iostream>
 
-// Hàm tạo với 1 texture (để lặp lại)
 Platform::Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const std::string& texturePath)
     : position(pos), size(sz), isSolid(true)
 {
@@ -13,17 +12,15 @@ Platform::Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const std::s
 
     if (!texture.loadFromFile(texturePath)) {
         std::cerr << "!!! LOI: Khong the tai platform texture: \"" << texturePath << "\"" << std::endl;
-        shape.setFillColor(sf::Color::Magenta); // Tô màu HỒNG để báo lỗi
+        shape.setFillColor(sf::Color::Magenta);
     } else {
         std::cout << "✓ Platform texture loaded: \"" << texturePath << "\"" << std::endl;
-        texture.setRepeated(true); // Cho phép lặp lại
-        shape.setTexture(&texture); // Gán ảnh
-        // Đặt vùng lặp bằng kích thước platform
+        texture.setRepeated(true);
+        shape.setTexture(&texture);
         shape.setTextureRect(sf::IntRect(0, 0, static_cast<int>(size.x), static_cast<int>(size.y)));
     }
 }
 
-// Hàm tạo dự phòng với màu trơn
 Platform::Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const sf::Color& color)
     : position(pos), size(sz), isSolid(true)
 {
@@ -35,7 +32,6 @@ Platform::Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const sf::Co
 }
 
 Platform::~Platform() {
-    // Để trống
 }
 
 sf::FloatRect Platform::getBounds() const {

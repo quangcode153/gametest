@@ -42,28 +42,23 @@ public:
     sf::Vector2f getPosition() const;
     sf::FloatRect getBounds() const;
     
-    // Movement
     void moveLeft();
     void moveRight();
     void jump();
     void stopMoving();
     
-    // Update
     void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms);
     void updateAnimation(float deltaTime);
     void applyGravity(float deltaTime);
     
-    // Va chạm chính xác
     void checkCollisionX(const std::vector<std::unique_ptr<Platform>>& platforms);
     void checkCollisionY(const std::vector<std::unique_ptr<Platform>>& platforms);
     
-    // Combat & Power
     void takeDamage();
     bool canTakeDamage() const;
     void activatePowerup(float duration);
     bool isInvulnerable() const;
     
-    // Getters
     int getHealth() const { return health; }
     int getMaxHealth() const { return maxHealth; }
     bool getIsOnGround() const { return isOnGround; }
@@ -71,7 +66,6 @@ public:
     float getPowerupTimer() const { return powerupTimer; }
     sf::Vector2f getVelocity() const { return velocity; }
     
-    // Rendering
     void draw(sf::RenderWindow& window);
 };
 

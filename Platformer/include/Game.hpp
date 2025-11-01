@@ -29,7 +29,6 @@ private:
     sf::Texture backgroundTexture;
     sf::Sprite background;
     
-    // Background cho Game Over
     sf::Texture gameOverBackgroundTexture;
     sf::Sprite  gameOverBackgroundSprite;
 
@@ -43,21 +42,17 @@ private:
 
     std::unique_ptr<Menu> menu;
 
-    // Font và UI
     sf::Font font;
-    sf::Text scoreText; // Giữ lại, có thể dùng cho điểm số
-    bool fontLoaded; // Biến thành viên (member variable)
+    sf::Text scoreText; 
+    bool fontLoaded; 
 
-    // UI Trái tim
     sf::Texture heartTexture;
     sf::Sprite heartSprite;
 
-    // --- DÙNG TEXT THAY VÌ SPRITE ---
-    sf::Text winText;           // Chữ "YOU WIN!"
-    sf::Text gameOverText;      // Chữ "GAME OVER"
-    sf::Text restartText;       // Chữ "Restart"
-    sf::Text menuText;          // Chữ "Menu"
-    // --- HẾT PHẦN SỬA ---
+    sf::Text winText;         
+    sf::Text gameOverText;    
+    sf::Text restartText;     
+    sf::Text menuText;        
 
 public:
     Game();

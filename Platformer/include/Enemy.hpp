@@ -11,14 +11,11 @@ private:
     sf::Texture texture;
     sf::Sprite sprite;
     
-    // AI & Movement
-    sf::Vector2f velocity; // <-- SỬA: Dùng (x, y) để có trọng lực
+    sf::Vector2f velocity;
     float speed;
     bool movingRight;
     bool alive;
     
-    // (Không cần patrol bounds nữa)
-
 public:
     Enemy();
     ~Enemy();
@@ -30,17 +27,13 @@ public:
     sf::FloatRect getBounds() const;
     bool isAlive() const { return alive; }
     
-    // AI behavior
     void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms);
     void patrol();
     
-    // SỬA: checkBounds giờ cần biết platform
     void checkBounds(const std::vector<std::unique_ptr<Platform>>& platforms);
     
-    // Combat
     void kill();
     
-    // Rendering
     void draw(sf::RenderWindow& window);
 };
 

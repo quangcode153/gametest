@@ -7,7 +7,6 @@ Menu::Menu() :
     fontLoaded(false),
     animationTimer(0.f)
 {
-    // Setup background
     background.setSize(sf::Vector2f(1200.f, 800.f));
     background.setFillColor(sf::Color(20, 30, 50, 230));
     
@@ -33,19 +32,16 @@ void Menu::initialize() {
         return;
     }
     
-    // Setup title
     titleText.setFont(font);
-    titleText.setString("GAME TEST");
+    titleText.setString("Platformer adventure");
     titleText.setCharacterSize(72);
     titleText.setFillColor(sf::Color::Green);
     titleText.setStyle(sf::Text::Bold);
     
-    // Center title
     sf::FloatRect titleBounds = titleText.getLocalBounds();
     titleText.setOrigin(titleBounds.width / 2.f, titleBounds.height / 2.f);
     titleText.setPosition(600.f, 200.f);
     
-    // Setup menu options
     std::vector<std::string> optionStrings = {
         "START GAME",
         "SETTINGS",
@@ -63,7 +59,6 @@ void Menu::initialize() {
         option.setCharacterSize(40);
         option.setFillColor(sf::Color::White);
         
-        // Center option
         sf::FloatRect bounds = option.getLocalBounds();
         option.setOrigin(bounds.width / 2.f, bounds.height / 2.f);
         option.setPosition(600.f, startY + i * spacing);
@@ -71,7 +66,6 @@ void Menu::initialize() {
         menuOptions.push_back(option);
     }
     
-    // Highlight first option
     menuOptions[selectedIndex].setFillColor(sf::Color::Yellow);
     menuOptions[selectedIndex].setScale(1.2f, 1.2f);
     
@@ -79,17 +73,14 @@ void Menu::initialize() {
 }
 
 void Menu::moveUp() {
-    // Reset current selection
     menuOptions[selectedIndex].setFillColor(sf::Color::White);
     menuOptions[selectedIndex].setScale(1.f, 1.f);
     
-    // Move up
     selectedIndex--;
     if (selectedIndex < 0) {
         selectedIndex = static_cast<int>(MenuOption::COUNT) - 1;
     }
     
-    // Highlight new selection
     menuOptions[selectedIndex].setFillColor(sf::Color::Yellow);
     menuOptions[selectedIndex].setScale(1.2f, 1.2f);
     
@@ -97,17 +88,14 @@ void Menu::moveUp() {
 }
 
 void Menu::moveDown() {
-    // Reset current selection
     menuOptions[selectedIndex].setFillColor(sf::Color::White);
     menuOptions[selectedIndex].setScale(1.f, 1.f);
     
-    // Move down
     selectedIndex++;
     if (selectedIndex >= static_cast<int>(MenuOption::COUNT)) {
         selectedIndex = 0;
     }
     
-    // Highlight new selection
     menuOptions[selectedIndex].setFillColor(sf::Color::Yellow);
     menuOptions[selectedIndex].setScale(1.2f, 1.2f);
     
@@ -119,29 +107,23 @@ MenuOption Menu::getSelectedOption() const {
 }
 
 void Menu::update(float deltaTime) {
-    // Title animation (floating effect)
     animationTimer += deltaTime;
     float offset = 10.f * std::sin(animationTimer * 2.f);
     titleText.setPosition(600.f, 200.f + offset);
     
-    // Selected option pulse animation
     float pulseScale = 1.2f + 0.1f * std::sin(animationTimer * 5.f);
     menuOptions[selectedIndex].setScale(pulseScale, pulseScale);
 }
 
 void Menu::draw(sf::RenderWindow& window) {
-    // Draw background
     window.draw(background);
     
-    // Draw title
     window.draw(titleText);
     
-    // Draw menu options
     for (const auto& option : menuOptions) {
         window.draw(option);
     }
     
-    // Draw instructions
     if (fontLoaded) {
         sf::Text instructions;
         instructions.setFont(font);
@@ -157,14 +139,12 @@ void Menu::draw(sf::RenderWindow& window) {
     }
 }
 bool Menu::isStartButtonClicked(const sf::Vector2f& mousePos) const {
-    // "START GAME" là menuOptions[0]
     if (menuOptions.size() > 0 && menuOptions[0].getGlobalBounds().contains(mousePos))
         return true;
     return false;
 }
 
 bool Menu::isExitButtonClicked(const sf::Vector2f& mousePos) const {
-    // "EXIT" là menuOptions[2]
     if (menuOptions.size() > 2 && menuOptions[2].getGlobalBounds().contains(mousePos))
         return true;
     return false;

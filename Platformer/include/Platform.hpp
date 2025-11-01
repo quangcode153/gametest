@@ -6,17 +6,15 @@
 
 class Platform {
 private:
-    sf::RectangleShape shape; // Chỉ dùng 1 shape
-    sf::Texture texture;      // Chỉ dùng 1 texture
+    sf::RectangleShape shape; 
+    sf::Texture texture;      
     bool isSolid;
     sf::Vector2f position;
     sf::Vector2f size;
 
 public:
-    // Hàm tạo nhận 1 đường dẫn texture (để lặp lại)
     Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const std::string& texturePath); 
     
-    // Hàm tạo dự phòng với màu trơn
     Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const sf::Color& color); 
 
     ~Platform();
@@ -29,4 +27,4 @@ public:
     void draw(sf::RenderWindow& window) const;
 };
 
-#endif // PLATFORM_HPP
+#endif

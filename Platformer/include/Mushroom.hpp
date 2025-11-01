@@ -6,14 +6,13 @@
 
 class Mushroom {
 private:
-    sf::CircleShape capShape;      // Mũ nấm
-    sf::RectangleShape stemShape;  // Chân nấm
-    std::vector<sf::CircleShape> spots; // Chấm trắng
+    sf::CircleShape capShape;  
+    sf::RectangleShape stemShape; 
+    std::vector<sf::CircleShape> spots; 
     
     sf::Vector2f position;
     bool collected;
     
-    // Animation
     float animationTimer;
     float scaleOffset;
 

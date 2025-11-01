@@ -1,9 +1,8 @@
 #include "Player.hpp"
 #include <iostream>
 #include <algorithm>
-#include "Constants.hpp" // (Giả sử file này định nghĩa TILE_SIZE)
+#include "Constants.hpp" 
 
-// --- HÀM KHỞI TẠO (ĐÃ SỬA VẬT LÝ + TĂNG ĐỘ NHẢY) ---
 Player::Player() :
     frameCount(1),
     currentFrameIndex(0),
@@ -28,7 +27,6 @@ Player::Player() :
 
 Player::~Player() {}
 
-// --- LOAD TEXTURE (ĐÃ SỬA ĐỂ XÓA VIỀN TRẮNG) ---
 bool Player::loadTexture(const std::string& path) {
     std::vector<std::string> paths = {
         path,
@@ -36,12 +34,12 @@ bool Player::loadTexture(const std::string& path) {
         "assets/player.png"
     };
     
-    sf::Image playerImage; // <-- Dùng sf::Image để xử lý
+    sf::Image playerImage; 
     bool loaded = false;
 
     for (const auto& tryPath : paths) {
         std::cout << "Trying player: " << tryPath << "... ";
-        if (playerImage.loadFromFile(tryPath)) { // <-- Tải vào Image
+        if (playerImage.loadFromFile(tryPath)) { 
             std::cout << "SUCCESS!\n";
             loaded = true;
             break;
@@ -53,18 +51,18 @@ bool Player::loadTexture(const std::string& path) {
     if (!loaded) {
         std::cout << "✗ Cannot load player texture from any path\n";
         
-        // (Code fallback của bạn)
+        
         sf::Image fallbackImage;
         fallbackImage.create(50, 50, sf::Color::Transparent);
-        // ... (phần code vẽ fallback của bạn) ...
+        
         texture.loadFromImage(fallbackImage);
         std::cout << "✓ Fallback player texture created\n";
 
     } else {
-        // Tải thành công vào playerImage
-        // *** ĐÂY LÀ PHẦN SỬA LỖI VIỀN TRẮNG ***
+        
+        
         playerImage.createMaskFromColor(sf::Color::White);
-        // ************************************
+        
 
         if (!texture.loadFromImage(playerImage)) {
              std::cerr << "Loi: Khong the nap texture tu image player da xu ly." << std::endl;
@@ -72,20 +70,20 @@ bool Player::loadTexture(const std::string& path) {
         }
     }
 
-    texture.setSmooth(false); // Dành cho pixel art
+    texture.setSmooth(false); 
     sprite.setTexture(texture);
 
-    // Setup animation (đã sửa cho ảnh tĩnh)
+    
     sf::Vector2u textureSize = texture.getSize();
     frameCount = 1; 
     currentFrame = sf::IntRect(0, 0, textureSize.x / frameCount, textureSize.y);
     sprite.setTextureRect(currentFrame);
 
-    // Đặt gốc ở chân
+    
     sprite.setOrigin(currentFrame.width / 2.f, currentFrame.height);
 
-    // Scale
-    float baseSize = 32.f; // (Giả sử TILE_SIZE = 32)
+    
+    float baseSize = 32.f; 
     #ifdef TILE_SIZE
         baseSize = TILE_SIZE;
     #endif
@@ -136,9 +134,8 @@ void Player::stopMoving() {
     velocity.x = 0.f;
 }
 
-// --- UPDATE (VẬT LÝ CHÍNH XÁC) ---
 void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms) {
-    // Timers
+    
     if (invulnerabilityTimer > 0.f) invulnerabilityTimer -= deltaTime;
     if (isPoweredUp) {
         powerupTimer -= deltaTime;
@@ -147,19 +144,19 @@ void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>
         }
     }
 
-    // 1. Di chuyển X
+    
     sprite.move(velocity.x * deltaTime, 0.f); 
     checkCollisionX(platforms);
 
-    // 2. Di chuyển Y (Trọng lực)
+    
     applyGravity(deltaTime);
     sprite.move(0.f, velocity.y * deltaTime); 
     checkCollisionY(platforms);
 
-    // 3. Animation
+    
     updateAnimation(deltaTime);
 
-    // 4. Lật sprite
+    
     float currentScale = isPoweredUp ? poweredScale : normalScale;
     float scaleX = (facingRight ? currentScale : -currentScale);
     sprite.setScale(scaleX, currentScale);
@@ -185,16 +182,16 @@ void Player::applyGravity(float deltaTime) {
         velocity.y = maxFallSpeed;
 }
 
-// --- VA CHẠM CHÍNH XÁC ---
+
 
 void Player::checkCollisionX(const std::vector<std::unique_ptr<Platform>>& platforms) {
     sf::FloatRect playerBounds = getBounds();
     for (const auto& platform : platforms) {
         sf::FloatRect platformBounds = platform->getBounds();
         if (playerBounds.intersects(platformBounds)) {
-            if (velocity.x > 0) { // Đang đi sang phải
+            if (velocity.x > 0) { 
                 sprite.move(-(playerBounds.left + playerBounds.width - platformBounds.left), 0.f);
-            } else if (velocity.x < 0) { // Đang đi sang trái
+            } else if (velocity.x < 0) { 
                 sprite.move(platformBounds.left + platformBounds.width - playerBounds.left, 0.f);
             }
             velocity.x = 0;
@@ -208,18 +205,18 @@ void Player::checkCollisionY(const std::vector<std::unique_ptr<Platform>>& platf
     for (const auto& platform : platforms) {
         sf::FloatRect platformBounds = platform->getBounds();
         if (playerBounds.intersects(platformBounds)) {
-            if (velocity.y > 0) { // Đang rơi xuống
+            if (velocity.y > 0) { 
                 sprite.move(0.f, -(playerBounds.top + playerBounds.height - platformBounds.top));
                 velocity.y = 0;
                 isOnGround = true;
-            } else if (velocity.y < 0) { // Đang nhảy (đụng trần)
+            } else if (velocity.y < 0) { 
                 sprite.move(0.f, platformBounds.top + platformBounds.height - playerBounds.top);
                 velocity.y = 0;
             }
         }
     }
 }
-// --- CÁC HÀM CÒN LẠI ---
+
 
 void Player::takeDamage() {
     if (invulnerabilityTimer <= 0.f && !isPoweredUp) {
