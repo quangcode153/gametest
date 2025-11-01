@@ -33,7 +33,7 @@ void Menu::initialize() {
     }
     
     titleText.setFont(font);
-    titleText.setString("Platformer adventure");
+    titleText.setString("ADVENTURES OF A PRINCE");
     titleText.setCharacterSize(72);
     titleText.setFillColor(sf::Color::Green);
     titleText.setStyle(sf::Text::Bold);
