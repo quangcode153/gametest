@@ -33,6 +33,8 @@ private:
     float normalScale;
     float poweredScale;
 
+    int totalCoins; // <-- BIẾN MỚI CHO SỐ COIN
+
 public:
     Player();
     ~Player();
@@ -67,6 +69,13 @@ public:
     sf::Vector2f getVelocity() const { return velocity; }
     
     void draw(sf::RenderWindow& window);
+
+    // CÁC HÀM MỚI CHO COIN
+    void addCoin(int amount);
+    int getTotalCoins() const;
+    void setTotalCoins(int amount);
+
+    void heal(int amount);
 };
 
 #endif

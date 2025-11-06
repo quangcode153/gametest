@@ -21,7 +21,8 @@ Player::Player() :
     isPoweredUp(false),
     powerupTimer(0.f),
     normalScale(1.0f),
-    poweredScale(1.5f)
+    poweredScale(1.5f),
+    totalCoins(0) // <-- THÊM DÒNG NÀY: Khởi tạo totalCoins
 {
 }
 
@@ -31,7 +32,7 @@ bool Player::loadTexture(const std::string& path) {
     std::vector<std::string> paths = {
         path,
         "../" + path,
-        "assets/player.png"
+        "assets/player.png" // Fallback path, you might need to adjust this
     };
     
     sf::Image playerImage; 
@@ -51,19 +52,14 @@ bool Player::loadTexture(const std::string& path) {
     if (!loaded) {
         std::cout << "✗ Cannot load player texture from any path\n";
         
-        
         sf::Image fallbackImage;
-        fallbackImage.create(50, 50, sf::Color::Transparent);
+        fallbackImage.create(50, 50, sf::Color::Transparent); // Create a transparent fallback
         
         texture.loadFromImage(fallbackImage);
         std::cout << "✓ Fallback player texture created\n";
 
     } else {
-        
-        
-        playerImage.createMaskFromColor(sf::Color::White);
-        
-
+        playerImage.createMaskFromColor(sf::Color::White); // Assuming white is the background to be masked
         if (!texture.loadFromImage(playerImage)) {
              std::cerr << "Loi: Khong the nap texture tu image player da xu ly." << std::endl;
              return false;
@@ -73,16 +69,13 @@ bool Player::loadTexture(const std::string& path) {
     texture.setSmooth(false); 
     sprite.setTexture(texture);
 
-    
     sf::Vector2u textureSize = texture.getSize();
-    frameCount = 1; 
+    frameCount = 1; // Assuming a single frame for now, adjust if you have animation in player.png
     currentFrame = sf::IntRect(0, 0, textureSize.x / frameCount, textureSize.y);
     sprite.setTextureRect(currentFrame);
 
-    
     sprite.setOrigin(currentFrame.width / 2.f, currentFrame.height);
 
-    
     float baseSize = 32.f; 
     #ifdef TILE_SIZE
         baseSize = TILE_SIZE;
@@ -90,8 +83,8 @@ bool Player::loadTexture(const std::string& path) {
     
     float scaleX = baseSize / currentFrame.width;
     float scaleY = baseSize / currentFrame.height;
-    normalScale = std::min(scaleX, scaleY) * 2.0f; 
-    poweredScale = normalScale * 1.2f;
+    normalScale = std::min(scaleX, scaleY) * 2.0f; // Scale to be about 2 tiles high
+    poweredScale = normalScale * 1.2f; // Bigger when powered up
     sprite.setScale(normalScale, normalScale);
     
     std::cout << "Player sprite configured: scale=" << normalScale 
@@ -183,7 +176,6 @@ void Player::applyGravity(float deltaTime) {
 }
 
 
-
 void Player::checkCollisionX(const std::vector<std::unique_ptr<Platform>>& platforms) {
     sf::FloatRect playerBounds = getBounds();
     for (const auto& platform : platforms) {
@@ -242,11 +234,32 @@ bool Player::isInvulnerable() const {
 
 void Player::draw(sf::RenderWindow& window) {
     if (invulnerabilityTimer > 0.f) {
-        if (static_cast<int>(invulnerabilityTimer * 10) % 2 == 0) return;
+        if (static_cast<int>(invulnerabilityTimer * 10) % 2 == 0) return; // Blinking effect
     }
     if (isPoweredUp)
-        sprite.setColor(sf::Color(255, 255, 150));
+        sprite.setColor(sf::Color(255, 255, 150)); // Yellowish when powered up
     else
-        sprite.setColor(sf::Color::White);
+        sprite.setColor(sf::Color::White); // Normal color
     window.draw(sprite);
+}
+
+// CÁC HÀM MỚI CHO COIN
+void Player::addCoin(int amount) {
+    totalCoins += amount;
+    // std::cout << "Player collected " << amount << " coin(s). Total: " << totalCoins << std::endl; // Debug output
+}
+
+int Player::getTotalCoins() const {
+    return totalCoins;
+}
+
+void Player::setTotalCoins(int amount) {
+    totalCoins = amount;
+}
+void Player::heal(int amount) {
+    health += amount;
+    if (health > maxHealth) {
+        health = maxHealth; // Đảm bảo máu không vượt quá tối đa
+    }
+    std::cout << "Player healed " << amount << " health. Current health: " << health << "\n";
 }

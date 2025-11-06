@@ -7,8 +7,11 @@
 #include "Player.hpp"
 #include "Enemy.hpp"
 #include "Platform.hpp"
-#include "Mushroom.hpp"
+
 #include "Menu.hpp"
+
+// FORWARD DECLARATION CỦA ITEM
+class Item; // <-- THÊM DÒNG NÀY
 
 enum class GameState {
     MENU,
@@ -38,20 +41,23 @@ private:
     std::unique_ptr<Player> player;
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<std::unique_ptr<Platform>> platforms;
-    std::vector<std::unique_ptr<Mushroom>> mushrooms;
     
+    
+    // BIẾN MỚI ĐỂ QUẢN LÝ CÁC ITEM
+    std::vector<std::unique_ptr<Item>> items; // <-- THÊM DÒNG NÀY
+
     int currentLevel;
     int maxLevels;
     std::unique_ptr<Menu> menu;
 
     sf::Font font;
-    sf::Text scoreText; 
+    sf::Text scoreText; // Có thể dùng để hiển thị coin sau này
     bool fontLoaded; 
 
     sf::Texture heartTexture;
     sf::Sprite heartSprite;
 
-    sf::Text winText;         
+    sf::Text winText;       
     sf::Text gameOverText;    
     sf::Text restartText;     
     sf::Text menuText;        

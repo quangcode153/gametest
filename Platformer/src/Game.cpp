@@ -5,6 +5,17 @@
 #include <fstream> 
 #include <sstream>
 
+#include "Player.hpp"
+#include "Enemy.hpp"
+#include "Platform.hpp"
+
+#include "Menu.hpp" 
+
+// CÁC INCLUDE MỚI CHO ITEM
+#include "Item.hpp"       
+#include "CoinItem.hpp"   
+#include "HeartItem.hpp"
+
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
@@ -17,6 +28,11 @@ Game::Game() :
     camera.setSize(1200.f, 800.f); camera.setCenter(600.f, 400.f);
     uiView.setSize(1200.f, 800.f); uiView.setCenter(600.f, 400.f);
     initialize();
+
+    // Khởi tạo player ở đây để có thể dùng trong loadLevel
+    player = std::make_unique<Player>();
+    // Đường dẫn texture cho player sẽ được load trong loadLevel hoặc bạn có thể load ở đây
+    player->loadTexture("assets/player.png"); // Đường dẫn mặc định, có thể được override trong loadLevel
 }
 
 Game::~Game() {}
@@ -30,7 +46,7 @@ void Game::initialize() {
     std::string menuFontPath = "assets/fonts/arial.ttf"; 
     if (!menu->loadFont(menuFontPath)) { 
         std::cout << "Menu failed to load relative font, trying system font..." << std::endl;
-        menu->loadFont("C:\\Windows\\Fonts\\arial.ttf"); 
+        menu->loadFont("C:\\Windows\\Fonts\\arial.ttf"); // Fallback for Windows
     }
     
     menu->initialize();
@@ -53,8 +69,8 @@ void Game::loadResources() {
     } else {
         background.setTexture(backgroundTexture);
         sf::Vector2u bgSize = backgroundTexture.getSize();
-        float scaleX = 2400.f / bgSize.x;
-        float scaleY = 800.f / bgSize.y;
+        float scaleX = 2400.f / bgSize.x; // Scale to fit desired width
+        float scaleY = 800.f / bgSize.y;  // Scale to fit desired height
         background.setScale(scaleX, scaleY);
     }
 
@@ -74,7 +90,7 @@ void Game::loadResources() {
         std::cout << "✗ Heart image NOT FOUND! (assets/heart.png)\n";
     } else {
         std::cout << "✓ Heart image loaded.\n";
-        heartImage.createMaskFromColor(sf::Color::White); 
+        heartImage.createMaskFromColor(sf::Color::White); // Assuming white background for transparency
         if (!heartTexture.loadFromImage(heartImage)) {
              std::cerr << "Loi: Khong the nap heart texture tu image da xu ly." << std::endl;
         } else {
@@ -82,14 +98,14 @@ void Game::loadResources() {
         }
     }
     heartSprite.setTexture(heartTexture);
-    heartSprite.setScale(0.5f, 0.5f); 
+    heartSprite.setScale(0.5f, 0.5f); // Adjust scale as needed
 
     
     std::vector<std::string> fontPaths = {
         "assets/fonts/arial.ttf", 
         "C:\\Windows\\Fonts\\arial.ttf", 
-        "/System/Library/Fonts/Arial.ttf", 
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" 
+        "/System/Library/Fonts/Arial.ttf", // Fallback for macOS
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" // Fallback for Linux
     };
     
     fontLoaded = false; 
@@ -152,20 +168,15 @@ void Game::loadResources() {
     }
 }
 
-// Trong Game.cpp
 
-// Hàm loadLevel MỚI
-// Trong Game.cpp
-
-// Hàm loadLevel MỚI
 void Game::loadLevel(int levelNumber) {
     std::cout << "Loading level " << levelNumber << "...\n";
     platforms.clear();
     enemies.clear();
-    mushrooms.clear();
-    // (Không clear Player, chỉ đặt lại vị trí)
 
-    currentState = GameState::PLAYING; // Đặt trạng thái playing khi tải màn chơi
+    items.clear(); // <-- XÓA CÁC ITEM CŨ KHI TẢI MÀN MỚI
+
+    // currentState = GameState::PLAYING; // Đặt trạng thái playing khi tải màn chơi (Đã được gọi trong startGame)
 
     std::string levelPath = "assets/levels/level" + std::to_string(levelNumber) + ".txt";
 
@@ -177,14 +188,12 @@ void Game::loadLevel(int levelNumber) {
         return;
     }
 
-    // Lấy đường dẫn texture cho platform (CHẮC CHẮN ĐÂY LÀ ĐƯỜNG DẪN ĐÚNG CỦA ANH)
     std::string platformTexturePath = "assets/ground_forest.png"; 
     std::string enemyTexturePath = "assets/npc.png";
-    std::string playerTexturePath = "assets/player.png";
+    std::string playerTexturePath = "assets/player.png"; // Được load trong constructor Game
 
     std::string line;
     while (std::getline(file, line)) {
-        // Bỏ qua dòng trống hoặc dòng ghi chú
         if (line.empty() || line[0] == '#') {
             continue;
         }
@@ -193,16 +202,14 @@ void Game::loadLevel(int levelNumber) {
         std::string type;
         float x, y, w, h;
 
-        iss >> type; // Đọc từ đầu tiên (PLAYER, PLATFORM, ...)
+        iss >> type;
 
         if (type == "PLAYER") {
             iss >> x >> y;
-            if (player) { // Nếu player đã tồn tại, chỉ đặt lại vị trí
+            // Player đã được tạo trong constructor Game, chỉ cần đặt lại vị trí
+            if (player) {
                 player->setPosition({x, y});
-            } else { // Nếu player chưa được tạo (lần đầu tiên game chạy)
-                player = std::make_unique<Player>();
-                player->loadTexture(playerTexturePath);
-                player->setPosition({x, y});
+                player->setTotalCoins(0); // Reset coins khi bắt đầu level mới
             }
         } 
         else if (type == "PLATFORM") {
@@ -212,17 +219,29 @@ void Game::loadLevel(int levelNumber) {
         else if (type == "ENEMY") {
             iss >> x >> y;
             auto enemy = std::make_unique<Enemy>(); 
-            if (enemy->loadTexture(enemyTexturePath)) { // Dùng đường dẫn texture đã định nghĩa
+            if (enemy->loadTexture(enemyTexturePath)) { 
                 enemy->setPosition({x, y}); 
                 enemies.push_back(std::move(enemy)); 
             } else {
-                 std::cerr << "!!! LOI: Khong the tai enemy texture: " << enemyTexturePath << std::endl;
+                std::cerr << "!!! LOI: Khong the tai enemy texture: " << enemyTexturePath << std::endl;
             }
         } 
-        else if (type == "MUSHROOM") {
-            iss >> x >> y;
-            mushrooms.push_back(std::make_unique<Mushroom>(sf::Vector2f(x, y)));
-        } else {
+        
+        // PHẦN MỚI: XỬ LÝ ĐỌC ITEM TỪ FILE
+        else if (type == "ITEM") { 
+            std::string itemType; 
+            iss >> itemType >> x >> y;
+            if (itemType == "COIN") {
+                items.push_back(std::make_unique<CoinItem>(x, y));
+            }
+            else if (itemType == "HEART") {
+                items.push_back(std::make_unique<HeartItem>(x, y));
+                std::cout << "[DEBUG] Loaded Heart at: " << x << ", " << y << std::endl;
+            }
+            // Các loại item khác sẽ thêm vào đây sau
+        }
+        // HẾT PHẦN XỬ LÝ ITEM
+        else {
             std::cerr << "!!! LOI: Loai doi tuong khong hop le trong file level: " << type << " (dong: " << line << ")" << std::endl;
         }
     }
@@ -275,20 +294,20 @@ void Game::handleEvents() {
                  sf::FloatRect menuBounds = fontLoaded ? menuText.getGlobalBounds() : sf::FloatRect(670.f, 370.f, 120.f, 60.f);
                  
                  if (fontLoaded) { 
-                      if (restartBounds.contains(mousePos)) {
-                          restartText.setFillColor(sf::Color::Yellow);
-                          restartText.setScale(1.1f, 1.1f);
-                      } else {
-                          restartText.setFillColor(sf::Color::White);
-                          restartText.setScale(1.0f, 1.0f);
-                      }
-                      if (menuBounds.contains(mousePos)) {
-                          menuText.setFillColor(sf::Color::Yellow);
-                          menuText.setScale(1.1f, 1.1f);
-                      } else {
-                          menuText.setFillColor(sf::Color::White);
-                          menuText.setScale(1.0f, 1.0f);
-                      }
+                     if (restartBounds.contains(mousePos)) {
+                         restartText.setFillColor(sf::Color::Yellow);
+                         restartText.setScale(1.1f, 1.1f);
+                     } else {
+                         restartText.setFillColor(sf::Color::White);
+                         restartText.setScale(1.0f, 1.0f);
+                     }
+                     if (menuBounds.contains(mousePos)) {
+                         menuText.setFillColor(sf::Color::Yellow);
+                         menuText.setScale(1.1f, 1.1f);
+                     } else {
+                         menuText.setFillColor(sf::Color::White);
+                         menuText.setScale(1.0f, 1.0f);
+                     }
                  }
             }
         }
@@ -349,18 +368,56 @@ void Game::updatePlaying(float deltaTime) {
     
     player->update(deltaTime, platforms);
     for (auto& enemy : enemies) enemy->update(deltaTime, platforms);
-    for (auto& mushroom : mushrooms) mushroom->update(deltaTime);
+    
+
+    // PHẦN MỚI: CẬP NHẬT VÀ KIỂM TRA VA CHẠM ITEM
+    for (const auto& item : items) {
+        if (!item->isCollected()) { 
+            item->update(deltaTime); 
+            if (player->getBounds().intersects(item->getBounds())) {
+                item->onCollect(*player); 
+            }
+        }
+    }
+    // Xóa các item đã thu thập khỏi vector
+    auto removeIt = std::remove_if(items.begin(), items.end(), 
+                                   [](const std::unique_ptr<Item>& i){ return i && i->isCollected(); });
+    items.erase(removeIt, items.end());
+    // HẾT PHẦN CẬP NHẬT ITEM
 
     
     sf::FloatRect playerBounds = player->getBounds();
-    for (auto& enemy : enemies) { if (!enemy) continue; if (!enemy->isAlive()) continue; sf::FloatRect enemyBounds = enemy->getBounds(); if (playerBounds.intersects(enemyBounds)) { float playerBottom = playerBounds.top + playerBounds.height; float enemyTop = enemyBounds.top; float overlap = playerBottom - enemyTop; if (player->getVelocity().y > 0 && overlap < 25.f && enemyBounds.top > playerBounds.top) enemy->kill(); else if (player->canTakeDamage()) { player->takeDamage(); if (player->getHealth() <= 0) { currentState = GameState::GAME_OVER; std::cout << "--- Player health <=0! State -> GAME_OVER ---" << std::endl; } } } }
-    for (auto& mushroom : mushrooms) { if (!mushroom) continue; if (mushroom->isCollected()) continue; if (playerBounds.intersects(mushroom->getBounds())) { mushroom->collect(); player->activatePowerup(5.0f); } }
+    for (auto& enemy : enemies) { 
+        if (!enemy || !enemy->isAlive()) continue; 
+        sf::FloatRect enemyBounds = enemy->getBounds(); 
+        if (playerBounds.intersects(enemyBounds)) { 
+            float playerBottom = playerBounds.top + playerBounds.height; 
+            float enemyTop = enemyBounds.top; 
+            float overlap = playerBottom - enemyTop; 
+            if (player->getVelocity().y > 0 && overlap < 25.f && enemyBounds.top > playerBounds.top) {
+                enemy->kill(); 
+            }
+            else if (player->canTakeDamage()) { 
+                player->takeDamage(); 
+                if (player->getHealth() <= 0) { 
+                    currentState = GameState::GAME_OVER; 
+                    std::cout << "--- Player health <=0! State -> GAME_OVER ---" << std::endl; 
+                } 
+            } 
+        } 
+    }
+    
 
     
     if (currentState == GameState::PLAYING) {
         bool allEnemiesDead = std::all_of(enemies.begin(), enemies.end(),
-                                        [](const std::unique_ptr<Enemy>& e){ return e && !e->isAlive(); });
-        if (allEnemiesDead && !enemies.empty()) {
+                                         [](const std::unique_ptr<Enemy>& e){ return e && !e->isAlive(); });
+        
+        // Thêm điều kiện kiểm tra tất cả các item đã được thu thập
+        
+
+        // Cập nhật điều kiện thắng level: tất cả kẻ thù chết VÀ tất cả item đã được nhặt
+        if (allEnemiesDead &&(!enemies.empty() || !items.empty())) { // Đảm bảo ít nhất có enemy hoặc item để thắng
             currentLevel++;
             if (currentLevel > maxLevels) {
                 currentState = GameState::WIN; 
@@ -410,8 +467,15 @@ void Game::renderPlaying() {
     window.setView(camera);
     window.draw(background);
     for (const auto& platform : platforms) platform->draw(window);
-    for (const auto& mushroom : mushrooms) mushroom->draw(window);
+    
     for (const auto& enemy : enemies) enemy->draw(window);
+    
+    // PHẦN MỚI: VẼ CÁC ITEM
+    for (const auto& item : items) {
+        item->draw(window); 
+    }
+    // HẾT PHẦN VẼ ITEM
+
     if(player) player->draw(window);
 
     
@@ -420,26 +484,35 @@ void Game::renderPlaying() {
     float heartPadding = heartSprite.getGlobalBounds().width + 10.f;
 
     if (player) {
-        heartSprite.setColor(sf::Color(100, 100, 100, 150));
+        heartSprite.setColor(sf::Color(100, 100, 100, 150)); // Render empty hearts as grey
         for (int i = 0; i < player->getMaxHealth(); ++i) {
             heartSprite.setPosition(heartX + (i * heartPadding), heartY);
             window.draw(heartSprite);
         }
-        heartSprite.setColor(sf::Color::White);
+        heartSprite.setColor(sf::Color::White); // Render full hearts as white
         for (int i = 0; i < player->getHealth(); ++i) {
             heartSprite.setPosition(heartX + (i * heartPadding), heartY);
             window.draw(heartSprite);
         }
+        // HIỂN THỊ SỐ COIN
+        if (fontLoaded) {
+            sf::Text coinText;
+            coinText.setFont(font);
+            coinText.setString("Coins: " + std::to_string(player->getTotalCoins()));
+            coinText.setCharacterSize(24);
+            coinText.setFillColor(sf::Color::Yellow);
+            coinText.setPosition(window.getSize().x - 200.f, heartY); 
+            window.draw(coinText);
+        }
     }
 
-    
     if (fontLoaded) {
         if (player && player->getIsPoweredUp()) {
             sf::Text powerupText; powerupText.setFont(font);
             powerupText.setString("POWERED UP: " + std::to_string(static_cast<int>(player->getPowerupTimer() + 1)) + "s");
             powerupText.setCharacterSize(24); powerupText.setFillColor(sf::Color::Yellow);
             powerupText.setPosition(window.getSize().x - 250.f, 30.f);
-             window.draw(powerupText);
+            window.draw(powerupText);
         }
     }
 }
@@ -464,7 +537,7 @@ void Game::renderWin() {
     window.setView(camera); 
     window.draw(background);
     for (const auto& platform : platforms) platform->draw(window);
-    for (const auto& mushroom : mushrooms) mushroom->draw(window);
+    
     if(player) player->draw(window);
 
     
@@ -479,7 +552,7 @@ void Game::renderWin() {
         window.draw(restartText); 
         window.draw(menuText);    
     } else {
-         std::cerr << "[DEBUG] Cannot draw WIN text properly: Font not loaded.\n";
+        std::cerr << "[DEBUG] Cannot draw WIN text properly: Font not loaded.\n";
     }
 }
 
@@ -489,11 +562,27 @@ void Game::startGame() {
     loadLevel(currentLevel);
     currentState = GameState::PLAYING;
 }
+
 void Game::restartGame() { 
     std::cout << "Restarting game...\n"; 
-    loadLevel(currentLevel);
-    currentState = GameState::PLAYING; }
-void Game::returnToMenu() { std::cout << "Returning to menu...\n"; currentState = GameState::MENU; }
+    // Không cần đặt lại currentLevel = 1 ở đây nếu bạn muốn restart level hiện tại
+    // Nếu muốn restart từ level 1, uncomment dòng dưới:
+    // currentLevel = 1; 
+    loadLevel(currentLevel); // Tải lại level hiện tại
+    currentState = GameState::PLAYING; 
+}
+
+void Game::returnToMenu() { 
+    std::cout << "Returning to menu...\n"; 
+    currentState = GameState::MENU; 
+    // Bạn có thể reset player và các thứ khác nếu muốn game hoàn toàn mới khi trở về menu
+    // Ví dụ: player = std::make_unique<Player>(); player->loadTexture("assets/player.png");
+    // hoặc reset health/coins của player hiện tại
+    if (player) {
+        player->setTotalCoins(0);
+        // player->setHealth(player->getMaxHealth()); // Nếu muốn reset máu khi về menu
+    }
+}
 
 void Game::run() {
     std::cout << "\n=== Game Loop Started ===\n";
@@ -501,7 +590,7 @@ void Game::run() {
     while (window.isOpen()) {
         handleEvents();
         float deltaTime = deltaClock.restart().asSeconds();
-        if (deltaTime > 0.1f) deltaTime = 0.1f;
+        if (deltaTime > 0.1f) deltaTime = 0.1f; // Cap deltaTime to prevent "spiral of death"
         update(deltaTime);
         render();
     }
