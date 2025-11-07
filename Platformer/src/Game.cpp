@@ -49,13 +49,40 @@ void Game::initialize() {
         menu->loadFont("C:\\Windows\\Fonts\\arial.ttf"); // Fallback for Windows
     }
     
+    // === SỬA LỖI: XÓA DÒNG GỌI loadFrameTexture ĐI ===
+    // (Vì Menu::Menu() đã tự tải rồi)
+    // if (!menu->loadFrameTexture("assets/khungMenu.png")) {
+    //     std::cerr << "!!! LOI: Khong the tai assets/khungMenu.png tu Game.cpp\n";
+    // }
+    // ============================================
+
     menu->initialize();
     std::cout << "Game initialized!\n";
 }
 
 void Game::loadResources() {
+
+    // === TẢI BACKGROUND CHO MENU ===
+    if (!menuBackgroundTexture.loadFromFile("assets/backgroundMenu.png")) {
+        std::cerr << "!!! LOI: Khong tai duoc assets/backgroundMenu.png\n";
+    } else {
+        std::cout << "✓ Menu Background loaded: assets/backgroundMenu.png\n";
+        menuBackgroundSprite.setTexture(menuBackgroundTexture);
+        
+        sf::Vector2u bgSize = menuBackgroundTexture.getSize();
+
+        // === SỬA LỖI SCALE ẢNH DỌC ===
+        float scaleX = 1200.f / bgSize.x;
+        float scaleY = 800.f / bgSize.y;
+        float scale = std::max(scaleX, scaleY); 
+
+        menuBackgroundSprite.setScale(scale, scale);
+        menuBackgroundSprite.setOrigin(bgSize.x / 2.f, bgSize.y / 2.f);
+        menuBackgroundSprite.setPosition(1200.f / 2.f, 800.f / 2.f);
+        // ============================
+    }
     
-    std::cout << "Background se duoc tai trong loadLevel().\n"; // Ghi chú mới
+    std::cout << "Background (in-game) se duoc tai trong loadLevel().\n";
 
     
     if (!gameOverBackgroundTexture.loadFromFile("assets/backgroundEnd.png")) {
@@ -73,7 +100,7 @@ void Game::loadResources() {
         std::cout << "✗ Heart image NOT FOUND! (assets/heart.png)\n";
     } else {
         std::cout << "✓ Heart image loaded.\n";
-        heartImage.createMaskFromColor(sf::Color::White); // Assuming white background for transparency
+        heartImage.createMaskFromColor(sf::Color::White); 
         if (!heartTexture.loadFromImage(heartImage)) {
             std::cerr << "Loi: Khong the nap heart texture tu image da xu ly." << std::endl;
         } else {
@@ -81,14 +108,14 @@ void Game::loadResources() {
         }
     }
     heartSprite.setTexture(heartTexture);
-    heartSprite.setScale(0.5f, 0.5f); // Adjust scale as needed
+    heartSprite.setScale(0.5f, 0.5f); 
 
     
     std::vector<std::string> fontPaths = {
         "assets/fonts/arial.ttf", 
         "C:\\Windows\\Fonts\\arial.ttf", 
-        "/System/Library/Fonts/Arial.ttf", // Fallback for macOS
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" // Fallback for Linux
+        "/System/Library/Fonts/Arial.ttf", 
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     };
     
     fontLoaded = false; 
@@ -157,11 +184,9 @@ void Game::loadLevel(int levelNumber) {
     platforms.clear();
     enemies.clear();
 
-    items.clear(); // <-- XÓA CÁC ITEM CŨ KHI TẢI MÀN MỚI
+    items.clear(); 
 
-    // ==========================================================
     // Nạp Background
-    // ==========================================================
     std::string bgPath;
     if (levelNumber == 1) {
         bgPath = "assets/background.png";
@@ -190,8 +215,6 @@ void Game::loadLevel(int levelNumber) {
         float scaleY = 800.f / bgSize.y;  // Scale to fit desired height
         background.setScale(scaleX, scaleY);
     }
-    // ==========================================================
-
 
     std::string levelPath = "assets/levels/level" + std::to_string(levelNumber) + ".txt";
 
@@ -203,9 +226,7 @@ void Game::loadLevel(int levelNumber) {
         return;
     }
 
-    // ==========================================================
     // Nạp Platform
-    // ==========================================================
     std::string platformTexturePath;
     if (levelNumber == 1) {
         platformTexturePath = "assets/ground_forest.png";
@@ -214,18 +235,17 @@ void Game::loadLevel(int levelNumber) {
         platformTexturePath = "assets/ground_forest2.png"; 
     }
     else if (levelNumber == 3) {
-        platformTexturePath = "assets/ground_forest3.jpg"; // <-- Sửa lại thành .jpg
+        platformTexturePath = "assets/ground_forest3.jpg"; // <-- .jpg
     }
     else if (levelNumber == 4) { 
-        platformTexturePath = "assets/ground_forest4.jpg"; // <-- Sửa lại thành .jpg
+        platformTexturePath = "assets/ground_forest4.jpg"; // <-- .jpg
     }
     else {
         platformTexturePath = "assets/ground_forest.png"; // Mặc định
     }
-    // ==========================================================
     
     std::string enemyTexturePath = "assets/npc.png";
-    std::string playerTexturePath = "assets/player.png"; // Được load trong constructor Game
+    std::string playerTexturePath = "assets/player.png";
 
     std::string line;
     while (std::getline(file, line)) {
@@ -310,7 +330,8 @@ void Game::handleEvents() {
                 
                 
                 if (currentState == GameState::MENU && menu) { 
-                    if (menu->isStartButtonClicked(mousePos)) startGame(); 
+                    // === SỬA LỖI 1: Đổi tên hàm ===
+                    if (menu->isPlayButtonClicked(mousePos)) startGame(); 
                     else if (menu->isExitButtonClicked(mousePos)) window.close();
                 }
             }
@@ -363,7 +384,12 @@ void Game::handleEvents() {
                 case sf::Keyboard::Up: if (currentState == GameState::MENU && menu) menu->moveUp(); break;
                 case sf::Keyboard::Down: if (currentState == GameState::MENU && menu) menu->moveDown(); break;
                 case sf::Keyboard::Return:
-                    if (currentState == GameState::MENU && menu) { MenuOption option = menu->getSelectedOption(); if (option == MenuOption::START_GAME) startGame(); else if (option == MenuOption::EXIT) window.close(); }
+                    if (currentState == GameState::MENU && menu) { 
+                        MenuOption option = menu->getSelectedOption(); 
+                        // === SỬA LỖI 2: Đổi tên Enum ===
+                        if (option == MenuOption::PLAY) startGame(); 
+                        else if (option == MenuOption::EXIT) window.close(); 
+                    }
                     break;
                 case sf::Keyboard::Space: if (currentState == GameState::PLAYING && player) player->jump(); break;
                 default: break;
@@ -439,8 +465,7 @@ void Game::updatePlaying(float deltaTime) {
     }
     
 
-    // ==========================================================
-    // === CẬP NHẬT LOGIC QUA MÀN (CHỈ CẦN DIỆT QUÁI) ===
+    // LOGIC QUA MÀN (CHỈ CẦN DIỆT QUÁI)
     if (currentState == GameState::PLAYING) {
         
         bool allEnemiesDead = std::all_of(enemies.begin(), enemies.end(),
@@ -463,14 +488,12 @@ void Game::updatePlaying(float deltaTime) {
             }
         }
     }
-    // ==========================================================
 
 
     
     sf::Vector2f playerPos = player->getPosition(); float cameraX = playerPos.x;
-    // Giả sử map rộng 2400, view là 1200
-    if (cameraX < 600.f) cameraX = 600.f; // Giới hạn trái
-    if (cameraX > 2400.f - 600.f) cameraX = 2400.f - 600.f; // Giới hạn phải
+    if (cameraX < 600.f) cameraX = 600.f; 
+    if (cameraX > 2400.f - 600.f) cameraX = 2400.f - 600.f; 
     camera.setCenter(cameraX, 400.f);
 
     
@@ -486,7 +509,7 @@ void Game::updateGameOver() {}
 void Game::updateWin() {}
 
 void Game::render() {
-    window.clear(sf::Color(50, 150, 200));
+    window.clear(sf::Color(50, 150, 200)); 
     switch (currentState) {
         case GameState::MENU: renderMenu(); break;
         case GameState::PLAYING: renderPlaying(); break;
@@ -499,6 +522,11 @@ void Game::render() {
 
 void Game::renderMenu() {
     window.setView(uiView);
+
+    // Vẽ background trước
+    window.draw(menuBackgroundSprite);
+
+    // Vẽ các nút menu đè lên trên
     if(menu) menu->draw(window);
 }
 
@@ -521,12 +549,12 @@ void Game::renderPlaying() {
     float heartPadding = heartSprite.getGlobalBounds().width + 10.f;
 
     if (player) {
-        heartSprite.setColor(sf::Color(100, 100, 100, 150)); // Render empty hearts as grey
+        heartSprite.setColor(sf::Color(100, 100, 100, 150)); 
         for (int i = 0; i < player->getMaxHealth(); ++i) {
             heartSprite.setPosition(heartX + (i * heartPadding), heartY);
             window.draw(heartSprite);
         }
-        heartSprite.setColor(sf::Color::White); // Render full hearts as white
+        heartSprite.setColor(sf::Color::White); 
         
         for (int i = 0; i < player->getHealth(); ++i) {
             heartSprite.setPosition(heartX + (i * heartPadding), heartY);
@@ -602,21 +630,16 @@ void Game::startGame() {
     currentState = GameState::PLAYING;
 }
 
-// ==========================================================
-// === SỬA LỖI RESTART KHI WIN MÀN CUỐI ===
 void Game::restartGame() { 
     std::cout << "Restarting game...\n"; 
 
-    // Nếu ta đang ở màn hình WIN (nghĩa là currentLevel > maxLevels)
-    // Ta phải đặt lại currentLevel về màn cuối cùng (maxLevels)
     if (currentState == GameState::WIN) {
         currentLevel = maxLevels;
     }
     
-    loadLevel(currentLevel); // Tải lại level (giờ sẽ là level 4)
+    loadLevel(currentLevel); 
     currentState = GameState::PLAYING; 
 }
-// ==========================================================
 
 
 void Game::returnToMenu() { 
@@ -624,7 +647,7 @@ void Game::returnToMenu() {
     currentState = GameState::MENU; 
     if (player) {
         player->setTotalCoins(0);
-        // player->heal(player->getMaxHealth()); // Nếu muốn reset máu khi về menu
+        // player->heal(player->getMaxHealth()); 
     }
 }
 
@@ -634,7 +657,7 @@ void Game::run() {
     while (window.isOpen()) {
         handleEvents();
         float deltaTime = deltaClock.restart().asSeconds();
-        if (deltaTime > 0.1f) deltaTime = 0.1f; // Cap deltaTime to prevent "spiral of death"
+        if (deltaTime > 0.1f) deltaTime = 0.1f; 
         update(deltaTime);
         render(); 
     }

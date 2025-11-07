@@ -11,7 +11,7 @@
 #include "Menu.hpp"
 
 // FORWARD DECLARATION CỦA ITEM
-class Item; // <-- THÊM DÒNG NÀY
+class Item; 
 
 enum class GameState {
     MENU,
@@ -35,6 +35,10 @@ private:
     sf::Texture gameOverBackgroundTexture;
     sf::Sprite  gameOverBackgroundSprite;
 
+    // Background cho Menu
+    sf::Texture menuBackgroundTexture;
+    sf::Sprite menuBackgroundSprite;
+
     sf::View camera;
     sf::View uiView;
 
@@ -44,22 +48,22 @@ private:
     
     
     // BIẾN MỚI ĐỂ QUẢN LÝ CÁC ITEM
-    std::vector<std::unique_ptr<Item>> items; // <-- THÊM DÒNG NÀY
+    std::vector<std::unique_ptr<Item>> items; 
 
     int currentLevel;
     int maxLevels;
     std::unique_ptr<Menu> menu;
 
     sf::Font font;
-    sf::Text scoreText; // Có thể dùng để hiển thị coin sau này
+    sf::Text scoreText; 
     bool fontLoaded; 
 
     sf::Texture heartTexture;
     sf::Sprite heartSprite;
 
     sf::Text winText;       
-    sf::Text gameOverText;    
-    sf::Text restartText;     
+    sf::Text gameOverText;      
+    sf::Text restartText;       
     sf::Text menuText;        
 
 public:
