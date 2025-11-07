@@ -8,15 +8,19 @@ Platform::Platform(const sf::Vector2f& pos, const sf::Vector2f& sz, const std::s
     shape.setOrigin(0.f, 0.f); 
     shape.setPosition(position);
 
-    std::cout << "[DEBUG] Platform dang tai anh: \"" << texturePath << "\"" << std::endl;
+    // std::cout << "[DEBUG] Platform dang tai anh: \"" << texturePath << "\"" << std::endl;
 
     if (!texture.loadFromFile(texturePath)) {
         std::cerr << "!!! LOI: Khong the tai platform texture: \"" << texturePath << "\"" << std::endl;
-        shape.setFillColor(sf::Color::Magenta);
+        shape.setFillColor(sf::Color::Black); // Đổi thành màu đen nếu không tải được
     } else {
-        std::cout << "✓ Platform texture loaded: \"" << texturePath << "\"" << std::endl;
-        texture.setRepeated(true);
+        // std::cout << "✓ Platform texture loaded: \"" << texturePath << "\"" << std::endl;
+        texture.setRepeated(true); // Cho phép lặp lại texture
         shape.setTexture(&texture);
+        
+        // === DÒNG QUAN TRỌNG NHẤT ===
+        // Đặt TextureRect để lặp lại (tile) texture
+        // (0, 0) là góc bắt đầu, (size.x, size.y) là kích thước lặp lại
         shape.setTextureRect(sf::IntRect(0, 0, static_cast<int>(size.x), static_cast<int>(size.y)));
     }
 }

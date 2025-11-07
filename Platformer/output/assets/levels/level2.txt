@@ -25,7 +25,7 @@ ENEMY 800 350               # Tren be do tren cao
 ENEMY 1700 690              # Tren nen dat phai
 
 # Nam
-         # Tren be do ben phai cao
+          # Tren be do ben phai cao
 
 # CÁC ĐỒNG COIN MỚI
 ITEM COIN 150 560

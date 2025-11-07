@@ -29,7 +29,7 @@ void HeartItem::onCollect(Player& player) {
     if (!collected) { 
         if (player.getHealth() < player.getMaxHealth()) {
             player.heal(1); 
-            collected = true;  
+            this->collected = true;
             std::cout << "Heart collected! Player current health: " << player.getHealth() << std::endl;
             // TODO: Phát âm thanh nhặt tim ở đây
         } else {
