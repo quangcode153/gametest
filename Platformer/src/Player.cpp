@@ -12,11 +12,13 @@ Player::Player() :
     velocity(0.f, 0.f),
     moveSpeed(300.0f),
     
-    // === THÊM KHỞI TẠO MỚI ===
-    normalMoveSpeed(300.0f), // Lưu tốc độ gốc
+    
+    normalMoveSpeed(300.0f),
     isBoosted(false),
     boostTimer(0.f),
-    // ========================
+    
+    isShielded(false),
+    shieldTimer(0.f),
 
     jumpStrength(-800.0f),
     gravity(2000.0f),
@@ -146,16 +148,23 @@ void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>
         }
     }
 
-    // === THÊM LOGIC ĐẾM NGƯỢC SPEED BOOST ===
+    
     if (isBoosted) {
         boostTimer -= deltaTime;
         if (boostTimer <= 0.f) {
             isBoosted = false;
-            moveSpeed = normalMoveSpeed; // Trả về tốc độ cũ
+            moveSpeed = normalMoveSpeed; 
             std::cout << "Speed Boost ended!" << std::endl;
         }
     }
-    // =====================================
+    if (isShielded) {
+        shieldTimer -= deltaTime;
+        if (shieldTimer <= 0.f) {
+            isShielded = false;
+            std::cout << "Shield expired!" << std::endl;
+        }
+    }
+    
     
     sprite.move(velocity.x * deltaTime, 0.f); 
     checkCollisionX(platforms);
@@ -231,9 +240,19 @@ void Player::checkCollisionY(const std::vector<std::unique_ptr<Platform>>& platf
 
 void Player::takeDamage() {
     if (invulnerabilityTimer <= 0.f && !isPoweredUp) {
-        health--;
-        invulnerabilityTimer = 2.0f;
-        std::cout << "Player hit! Health: " << health << "\n";
+        if (isShielded) {
+            isShielded = false; // Khiên vỡ!
+            shieldTimer = 0.f;  // Hủy timer
+            invulnerabilityTimer = 1.0f; // Bất tử 1s ngắn sau khi khiên vỡ
+            std::cout << "Shield blocked 1 hit!" << std::endl;
+            // TODO: Phát âm thanh khiên vỡ
+        }
+        else{
+            health--;
+            invulnerabilityTimer = 2.0f;
+            std::cout << "Player hit! Health: " << health << "\n";
+        }
+        
     }
 }
 
@@ -248,7 +267,7 @@ void Player::activatePowerup(float duration) {
 }
 
 bool Player::isInvulnerable() const {
-    return invulnerabilityTimer > 0.f || isPoweredUp;
+    return invulnerabilityTimer > 0.f || isPoweredUp || isShielded;
 }
 
 void Player::draw(sf::RenderWindow& window) {
@@ -257,8 +276,10 @@ void Player::draw(sf::RenderWindow& window) {
     }
     if (isPoweredUp)
         sprite.setColor(sf::Color(255, 255, 150)); // Yellowish when powered up
-    else if (isBoosted) // <-- Thêm hiệu ứng màu khi tăng tốc
+    else if (isBoosted) 
         sprite.setColor(sf::Color(100, 100, 255)); // Màu xanh
+    else if (isShielded)
+        sprite.setColor(sf::Color(200, 200, 255, 200));
     else
         sprite.setColor(sf::Color::White); // Normal color
     window.draw(sprite);
@@ -285,12 +306,17 @@ void Player::heal(int amount) {
     std::cout << "Player healed " << amount << " health. Current health: " << health << "\n";
 }
 
-// === THÊM HÀM MỚI (Triển khai) ===
+
 void Player::activateSpeedBoost(float duration) {
-    if (!isBoosted) { // Chỉ kích hoạt nếu chưa được boost
-        moveSpeed = normalMoveSpeed * 1.5f; // Tăng 50%
+    if (!isBoosted) {
+        moveSpeed = normalMoveSpeed * 1.5f; 
     }
     isBoosted = true;
-    boostTimer = duration; // Đặt lại thời gian
+    boostTimer = duration; 
     std::cout << "Speed Boost activated for " << duration << "s!" << std::endl;
+}
+void Player::activateShield(float duration) {
+    isShielded = true;
+    shieldTimer = duration; 
+    std::cout << "Shield activated for " << duration << "s or 1 hit!" << std::endl;
 }

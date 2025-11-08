@@ -11,12 +11,12 @@
 
 #include "Menu.hpp" 
 
-// CÁC INCLUDE MỚI CHO ITEM
+
 #include "Item.hpp" 
 #include "CoinItem.hpp" 
 #include "HeartItem.hpp"
 #include "SpeedBoostItem.hpp" // <-- THÊM INCLUDE NÀY
-
+#include "ShieldItem.hpp"
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
@@ -285,12 +285,16 @@ void Game::loadLevel(int levelNumber) {
                 items.push_back(std::make_unique<HeartItem>(x, y));
                 std::cout << "[DEBUG] Loaded Heart at: " << x << ", " << y << std::endl;
             }
-            // === THÊM VÀO ĐÂY ===
+            
             else if (itemType == "SPEED") {
                 items.push_back(std::make_unique<SpeedBoostItem>(x, y));
                 std::cout << "[DEBUG] Loaded SpeedBoost at: " << x << ", " << y << std::endl;
             }
-            // ===================
+            else if (itemType == "SHIELD") {
+                items.push_back(std::make_unique<ShieldItem>(x, y));
+                std::cout << "[DEBUG] Loaded Shield at: " << x << ", " << y << std::endl;
+            }
+            
         }
         else {
             std::cerr << "!!! LOI: Loai doi tuong khong hop le trong file level: " << type << " (dong: " << line << ")" << std::endl;
@@ -555,7 +559,7 @@ void Game::renderPlaying() {
             window.draw(heartSprite);
         }
         
-        // HIỂN THỊ SỐ COIN
+        
         if (fontLoaded) {
             sf::Text coinText;
             coinText.setFont(font);
@@ -584,6 +588,15 @@ void Game::renderPlaying() {
             boostText.setFillColor(sf::Color::Cyan); // Màu xanh
             boostText.setPosition(window.getSize().x - 200.f, heartY + 30.f); // Bên dưới Coin
             window.draw(boostText);
+        }
+        if (player && player->getIsShielded()) {
+            sf::Text shieldText; 
+            shieldText.setFont(font);
+            shieldText.setString("SHIELD: " + std::to_string(static_cast<int>(player->getShieldTimer() + 1)) + "s");
+            shieldText.setCharacterSize(24); 
+            shieldText.setFillColor(sf::Color(200, 200, 255)); // Màu trắng xanh
+            shieldText.setPosition(window.getSize().x - 200.f, heartY + 60.f); // Bên dưới Speed
+            window.draw(shieldText);
         }
     }
 }

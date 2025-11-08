@@ -10,7 +10,10 @@ SpeedBoostItem::SpeedBoostItem(float x, float y)
 {
    
     sprite.setScale(0.1f, 0.1f); 
-    
+    // =================================
+
+    // === THÊM DÒNG NÀY (Copy từ HeartItem) ===
+    // Lưu lại vị trí Y ban đầu
     originalY = y; 
     // =====================================
 }

@@ -21,11 +21,12 @@ private:
     sf::Vector2f velocity;
     float moveSpeed;
 
-    // === THÊM BIẾN MỚI CHO SPEED BOOST ===
-    float normalMoveSpeed; // Tốc độ gốc
+    bool isShielded;
+    float shieldTimer;
+    float normalMoveSpeed; 
     bool isBoosted;
-    float boostTimer;      // Bộ đếm thời gian
-    // ====================================
+    float boostTimer;      
+  
 
     float jumpStrength;
     float gravity;
@@ -84,11 +85,14 @@ public:
 
     void heal(int amount);
 
-    // === THÊM HÀM MỚI CHO SPEED BOOST ===
+    
     void activateSpeedBoost(float duration);
     bool getIsBoosted() const { return isBoosted; }
     float getBoostTimer() const { return boostTimer; }
-    // ====================================
+    
+    void activateShield(float duration);
+    bool getIsShielded() const { return isShielded; }
+    float getShieldTimer() const { return shieldTimer; }
 };
 
 #endif
