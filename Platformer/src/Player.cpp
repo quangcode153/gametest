@@ -11,6 +11,13 @@ Player::Player() :
     facingRight(true),
     velocity(0.f, 0.f),
     moveSpeed(300.0f),
+    
+    // === THÊM KHỞI TẠO MỚI ===
+    normalMoveSpeed(300.0f), // Lưu tốc độ gốc
+    isBoosted(false),
+    boostTimer(0.f),
+    // ========================
+
     jumpStrength(-800.0f),
     gravity(2000.0f),
     maxFallSpeed(700.0f),
@@ -22,8 +29,10 @@ Player::Player() :
     powerupTimer(0.f),
     normalScale(1.0f),
     poweredScale(1.5f),
-    totalCoins(0) // <-- THÊM DÒNG NÀY: Khởi tạo totalCoins
+    totalCoins(0) 
 {
+    // Gán giá trị gốc (nếu bạn thay đổi moveSpeed ở trên, nó sẽ tự cập nhật)
+    normalMoveSpeed = moveSpeed; 
 }
 
 Player::~Player() {}
@@ -32,7 +41,7 @@ bool Player::loadTexture(const std::string& path) {
     std::vector<std::string> paths = {
         path,
         "../" + path,
-        "assets/player.png" // Fallback path, you might need to adjust this
+        "assets/player.png" 
     };
     
     sf::Image playerImage; 
@@ -53,16 +62,16 @@ bool Player::loadTexture(const std::string& path) {
         std::cout << "✗ Cannot load player texture from any path\n";
         
         sf::Image fallbackImage;
-        fallbackImage.create(50, 50, sf::Color::Transparent); // Create a transparent fallback
+        fallbackImage.create(50, 50, sf::Color::Transparent); 
         
         texture.loadFromImage(fallbackImage);
         std::cout << "✓ Fallback player texture created\n";
 
     } else {
-        playerImage.createMaskFromColor(sf::Color::White); // Assuming white is the background to be masked
+        playerImage.createMaskFromColor(sf::Color::White); 
         if (!texture.loadFromImage(playerImage)) {
-             std::cerr << "Loi: Khong the nap texture tu image player da xu ly." << std::endl;
-             return false;
+            std::cerr << "Loi: Khong the nap texture tu image player da xu ly." << std::endl;
+            return false;
         }
     }
 
@@ -70,7 +79,7 @@ bool Player::loadTexture(const std::string& path) {
     sprite.setTexture(texture);
 
     sf::Vector2u textureSize = texture.getSize();
-    frameCount = 1; // Assuming a single frame for now, adjust if you have animation in player.png
+    frameCount = 1; 
     currentFrame = sf::IntRect(0, 0, textureSize.x / frameCount, textureSize.y);
     sprite.setTextureRect(currentFrame);
 
@@ -83,8 +92,8 @@ bool Player::loadTexture(const std::string& path) {
     
     float scaleX = baseSize / currentFrame.width;
     float scaleY = baseSize / currentFrame.height;
-    normalScale = std::min(scaleX, scaleY) * 2.0f; // Scale to be about 2 tiles high
-    poweredScale = normalScale * 1.2f; // Bigger when powered up
+    normalScale = std::min(scaleX, scaleY) * 2.0f; 
+    poweredScale = normalScale * 1.2f; 
     sprite.setScale(normalScale, normalScale);
     
     std::cout << "Player sprite configured: scale=" << normalScale 
@@ -107,12 +116,12 @@ sf::FloatRect Player::getBounds() const {
 }
 
 void Player::moveLeft() {
-    velocity.x = -moveSpeed;
+    velocity.x = -moveSpeed; // moveSpeed giờ sẽ là biến động
     facingRight = false;
 }
 
 void Player::moveRight() {
-    velocity.x = moveSpeed;
+    velocity.x = moveSpeed; // moveSpeed giờ sẽ là biến động
     facingRight = true;
 }
 
@@ -137,6 +146,16 @@ void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>
         }
     }
 
+    // === THÊM LOGIC ĐẾM NGƯỢC SPEED BOOST ===
+    if (isBoosted) {
+        boostTimer -= deltaTime;
+        if (boostTimer <= 0.f) {
+            isBoosted = false;
+            moveSpeed = normalMoveSpeed; // Trả về tốc độ cũ
+            std::cout << "Speed Boost ended!" << std::endl;
+        }
+    }
+    // =====================================
     
     sprite.move(velocity.x * deltaTime, 0.f); 
     checkCollisionX(platforms);
@@ -238,6 +257,8 @@ void Player::draw(sf::RenderWindow& window) {
     }
     if (isPoweredUp)
         sprite.setColor(sf::Color(255, 255, 150)); // Yellowish when powered up
+    else if (isBoosted) // <-- Thêm hiệu ứng màu khi tăng tốc
+        sprite.setColor(sf::Color(100, 100, 255)); // Màu xanh
     else
         sprite.setColor(sf::Color::White); // Normal color
     window.draw(sprite);
@@ -262,4 +283,14 @@ void Player::heal(int amount) {
         health = maxHealth; // Đảm bảo máu không vượt quá tối đa
     }
     std::cout << "Player healed " << amount << " health. Current health: " << health << "\n";
+}
+
+// === THÊM HÀM MỚI (Triển khai) ===
+void Player::activateSpeedBoost(float duration) {
+    if (!isBoosted) { // Chỉ kích hoạt nếu chưa được boost
+        moveSpeed = normalMoveSpeed * 1.5f; // Tăng 50%
+    }
+    isBoosted = true;
+    boostTimer = duration; // Đặt lại thời gian
+    std::cout << "Speed Boost activated for " << duration << "s!" << std::endl;
 }

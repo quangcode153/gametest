@@ -20,6 +20,13 @@ private:
     
     sf::Vector2f velocity;
     float moveSpeed;
+
+    // === THÊM BIẾN MỚI CHO SPEED BOOST ===
+    float normalMoveSpeed; // Tốc độ gốc
+    bool isBoosted;
+    float boostTimer;      // Bộ đếm thời gian
+    // ====================================
+
     float jumpStrength;
     float gravity;
     float maxFallSpeed;
@@ -76,6 +83,12 @@ public:
     void setTotalCoins(int amount);
 
     void heal(int amount);
+
+    // === THÊM HÀM MỚI CHO SPEED BOOST ===
+    void activateSpeedBoost(float duration);
+    bool getIsBoosted() const { return isBoosted; }
+    float getBoostTimer() const { return boostTimer; }
+    // ====================================
 };
 
 #endif

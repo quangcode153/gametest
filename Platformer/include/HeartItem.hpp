@@ -17,9 +17,7 @@ public:
     // Khi Player nhặt HeartItem, Player sẽ được hồi máu
     void onCollect(Player& player) override; 
 
-    // Không cần override update nếu bạn không muốn animation cho HeartItem
-    // Nếu muốn tim nhấp nháy hoặc dao động nhẹ, có thể override ở đây.
-    // Hiện tại, không override để giữ cho nó tĩnh.
+    
     void update(float deltaTime) override; 
 };
 

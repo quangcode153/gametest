@@ -15,6 +15,7 @@
 #include "Item.hpp" 
 #include "CoinItem.hpp" 
 #include "HeartItem.hpp"
+#include "SpeedBoostItem.hpp" // <-- THÊM INCLUDE NÀY
 
 Game::Game() :
     totalTime(0.f),
@@ -48,13 +49,6 @@ void Game::initialize() {
         std::cout << "Menu failed to load relative font, trying system font..." << std::endl;
         menu->loadFont("C:\\Windows\\Fonts\\arial.ttf"); // Fallback for Windows
     }
-    
-    // === SỬA LỖI: XÓA DÒNG GỌI loadFrameTexture ĐI ===
-    // (Vì Menu::Menu() đã tự tải rồi)
-    // if (!menu->loadFrameTexture("assets/khungMenu.png")) {
-    //     std::cerr << "!!! LOI: Khong the tai assets/khungMenu.png tu Game.cpp\n";
-    // }
-    // ============================================
 
     menu->initialize();
     std::cout << "Game initialized!\n";
@@ -211,8 +205,8 @@ void Game::loadLevel(int levelNumber) {
         background.setTexture(backgroundTexture);
         
         sf::Vector2u bgSize = backgroundTexture.getSize();
-        float scaleX = 2400.f / bgSize.x; // Scale to fit desired width
-        float scaleY = 800.f / bgSize.y;  // Scale to fit desired height
+        float scaleX = 2400.f / bgSize.x; 
+        float scaleY = 800.f / bgSize.y;  
         background.setScale(scaleX, scaleY);
     }
 
@@ -222,7 +216,7 @@ void Game::loadLevel(int levelNumber) {
     if (!file.is_open()) {
         std::cerr << "!!! LOI: Khong the mo file level: " << levelPath << std::endl;
         std::cout << "Khong tim thay level, quay ve Menu." << std::endl;
-        currentState = GameState::MENU; // Nếu không tìm thấy file, quay về menu
+        currentState = GameState::MENU; 
         return;
     }
 
@@ -235,13 +229,13 @@ void Game::loadLevel(int levelNumber) {
         platformTexturePath = "assets/ground_forest2.png"; 
     }
     else if (levelNumber == 3) {
-        platformTexturePath = "assets/ground_forest3.jpg"; // <-- .jpg
+        platformTexturePath = "assets/ground_forest3.jpg"; 
     }
     else if (levelNumber == 4) { 
-        platformTexturePath = "assets/ground_forest4.jpg"; // <-- .jpg
+        platformTexturePath = "assets/ground_forest4.jpg"; 
     }
     else {
-        platformTexturePath = "assets/ground_forest.png"; // Mặc định
+        platformTexturePath = "assets/ground_forest.png"; 
     }
     
     std::string enemyTexturePath = "assets/npc.png";
@@ -291,6 +285,12 @@ void Game::loadLevel(int levelNumber) {
                 items.push_back(std::make_unique<HeartItem>(x, y));
                 std::cout << "[DEBUG] Loaded Heart at: " << x << ", " << y << std::endl;
             }
+            // === THÊM VÀO ĐÂY ===
+            else if (itemType == "SPEED") {
+                items.push_back(std::make_unique<SpeedBoostItem>(x, y));
+                std::cout << "[DEBUG] Loaded SpeedBoost at: " << x << ", " << y << std::endl;
+            }
+            // ===================
         }
         else {
             std::cerr << "!!! LOI: Loai doi tuong khong hop le trong file level: " << type << " (dong: " << line << ")" << std::endl;
@@ -330,7 +330,6 @@ void Game::handleEvents() {
                 
                 
                 if (currentState == GameState::MENU && menu) { 
-                    // === SỬA LỖI 1: Đổi tên hàm ===
                     if (menu->isPlayButtonClicked(mousePos)) startGame(); 
                     else if (menu->isExitButtonClicked(mousePos)) window.close();
                 }
@@ -386,7 +385,6 @@ void Game::handleEvents() {
                 case sf::Keyboard::Return:
                     if (currentState == GameState::MENU && menu) { 
                         MenuOption option = menu->getSelectedOption(); 
-                        // === SỬA LỖI 2: Đổi tên Enum ===
                         if (option == MenuOption::PLAY) startGame(); 
                         else if (option == MenuOption::EXIT) window.close(); 
                     }
@@ -423,20 +421,20 @@ void Game::updatePlaying(float deltaTime) {
     if (!moving) player->stopMoving();
 
     
-    player->update(deltaTime, platforms);
+    player->update(deltaTime, platforms); 
+    
     for (auto& enemy : enemies) enemy->update(deltaTime, platforms);
     
-
     // CẬP NHẬT VÀ KIỂM TRA VA CHẠM ITEM
     for (const auto& item : items) {
         if (!item->isCollected()) { 
             item->update(deltaTime); 
             if (player->getBounds().intersects(item->getBounds())) {
-                item->onCollect(*player); 
+                item->onCollect(*player); // Tự động gọi onCollect của SpeedBoostItem
             }
         }
     }
-    // Xóa các item đã thu thập khỏi vector
+    // Xóa các item đã thu thập
     auto removeIt = std::remove_if(items.begin(), items.end(), 
                                     [](const std::unique_ptr<Item>& i){ return i && i->isCollected(); });
     items.erase(removeIt, items.end());
@@ -473,10 +471,6 @@ void Game::updatePlaying(float deltaTime) {
         
         bool levelProgressCondition = allEnemiesDead;
         
-        // CHÚ Ý: Nếu một level không có BẤT KỲ quái (Enemy) nào,
-        // (allEnemiesDead = true) -> levelProgressCondition = true ngay lập tức -> qua màn.
-        // HÃY ĐẢM BẢO MỌI LEVEL CÓ ÍT NHẤT 1 ENEMY.
-
         if (levelProgressCondition) { 
             currentLevel++;
             if (currentLevel > maxLevels) {
@@ -545,8 +539,8 @@ void Game::renderPlaying() {
 
     
     window.setView(uiView);
-    float heartX = 50.f; float heartY = 30.f;
-    float heartPadding = heartSprite.getGlobalBounds().width + 10.f;
+    float heartX = 10.f; float heartY = 10.f;
+    float heartPadding = 70.f;
 
     if (player) {
         heartSprite.setColor(sf::Color(100, 100, 100, 150)); 
@@ -580,6 +574,16 @@ void Game::renderPlaying() {
             powerupText.setCharacterSize(24); powerupText.setFillColor(sf::Color::Yellow);
             powerupText.setPosition(window.getSize().x - 250.f, 30.f);
             window.draw(powerupText);
+        }
+        // THÊM VÀO: HIỂN THỊ THỜI GIAN SPEED BOOST
+        if (player && player->getIsBoosted()) {
+            sf::Text boostText; 
+            boostText.setFont(font);
+            boostText.setString("SPEED BOOST: " + std::to_string(static_cast<int>(player->getBoostTimer() + 1)) + "s");
+            boostText.setCharacterSize(24); 
+            boostText.setFillColor(sf::Color::Cyan); // Màu xanh
+            boostText.setPosition(window.getSize().x - 200.f, heartY + 30.f); // Bên dưới Coin
+            window.draw(boostText);
         }
     }
 }
