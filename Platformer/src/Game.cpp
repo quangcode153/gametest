@@ -252,11 +252,13 @@ void Game::loadLevel(int levelNumber) {
         float x, y, w, h;
 
         iss >> type;
-
-        if (type == "PLAYER") {
+if (type == "PLAYER") {
             iss >> x >> y;
             if (player) {
-                player->setPosition({x, y});
+                
+                float footOffset = player->getScaledFootOffset();
+                player->setPosition({x, y - footOffset}); 
+
                 player->setTotalCoins(0); 
                 player->heal(player->getMaxHealth()); 
             }
@@ -433,8 +435,8 @@ void Game::updatePlaying(float deltaTime) {
     for (const auto& item : items) {
         if (!item->isCollected()) { 
             item->update(deltaTime); 
-            if (player->getBounds().intersects(item->getBounds())) {
-                item->onCollect(*player); // Tự động gọi onCollect của SpeedBoostItem
+            if (player->getHitbox().intersects(item->getBounds())) {
+                item->onCollect(*player); 
             }
         }
     }
@@ -445,11 +447,13 @@ void Game::updatePlaying(float deltaTime) {
     
     
     // KIỂM TRA VA CHẠM VỚI QUÁI
-    sf::FloatRect playerBounds = player->getBounds();
+    sf::FloatRect playerBounds = player->getHitbox();
+    
     for (auto& enemy : enemies) { 
         if (!enemy || !enemy->isAlive()) continue; 
         sf::FloatRect enemyBounds = enemy->getBounds(); 
         if (playerBounds.intersects(enemyBounds)) { 
+            // ... (logic giẫm lên đầu hoặc bị trừ máu không đổi)
             float playerBottom = playerBounds.top + playerBounds.height; 
             float enemyTop = enemyBounds.top; 
             float overlap = playerBottom - enemyTop; 
@@ -458,14 +462,20 @@ void Game::updatePlaying(float deltaTime) {
             }
             else if (player->canTakeDamage()) { 
                 player->takeDamage(); 
-                if (player->getHealth() <= 0) { 
-                    currentState = GameState::GAME_OVER; 
-                    std::cout << "--- Player health <=0! State -> GAME_OVER ---" << std::endl; 
-                } 
+                
             } 
         } 
     }
-    
+    if (player->hasDeathAnimationFinished()) {
+        currentState = GameState::GAME_OVER;
+        std::cout << "--- Player DEATH animation finished! State -> GAME_OVER ---" << std::endl;
+    }
+    if (player->getPosition().y > window.getSize().y + 100.f) { 
+        if (currentState == GameState::PLAYING) {
+            currentState = GameState::GAME_OVER;
+            std::cout << "--- Player fell off map! State -> GAME_OVER ---" << std::endl;
+        }
+    }
 
     // LOGIC QUA MÀN (CHỈ CẦN DIỆT QUÁI)
     if (currentState == GameState::PLAYING) {
@@ -539,7 +549,10 @@ void Game::renderPlaying() {
         item->draw(window); 
     }
 
-    if(player) player->draw(window);
+    if(player){
+        player->draw(window);
+        player->drawHitbox(window);
+    } 
 
     
     window.setView(uiView);

@@ -5,28 +5,32 @@
 #include <vector>
 #include <memory>
 #include "Platform.hpp"
+#include "AnimationManager.hpp" 
 
 class Player {
 private:
-    sf::Texture texture;
     sf::Sprite sprite;
     
-    sf::IntRect currentFrame;
-    int frameCount;
-    int currentFrameIndex;
-    float animationTimer;
-    float frameTime;
+    std::unique_ptr<AnimationManager> animManager; 
+    
+    enum class State { IDLE, RUNNING, JUMPING, FALLING, ATTACK1, ATTACK2, TAKE_HIT, DEATH };
+    State currentState;
+
+    sf::Vector2i frameSize; 
+    
+    // === THÊM BIẾN NÀY ===
+    sf::FloatRect localHitbox; // Khung va chạm local (so với Origin)
+
     bool facingRight;
     
     sf::Vector2f velocity;
     float moveSpeed;
-
-    bool isShielded;
-    float shieldTimer;
     float normalMoveSpeed; 
     bool isBoosted;
     float boostTimer;      
-  
+
+    bool isShielded;
+    float shieldTimer;
 
     float jumpStrength;
     float gravity;
@@ -41,16 +45,27 @@ private:
     float normalScale;
     float poweredScale;
 
-    int totalCoins; // <-- BIẾN MỚI CHO SỐ COIN
+    int totalCoins; 
+
+    // Hàm helper
+    void setAnimation(State newState);
+    void loadAnimations(); 
 
 public:
+    void drawHitbox(sf::RenderWindow& window);
     Player();
     ~Player();
-    
-    bool loadTexture(const std::string& path);
+    Player::State getCurrentState() const;
+    bool hasDeathAnimationFinished() const;
+    bool loadTexture(const std::string& path); 
     void setPosition(const sf::Vector2f& pos);
     sf::Vector2f getPosition() const;
-    sf::FloatRect getBounds() const;
+
+    // === SỬA/THÊM CÁC HÀM NÀY ===
+    sf::FloatRect getBounds() const;     // Giữ lại (trả về khung hình ảnh)
+    sf::FloatRect getHitbox() const;     // Hàm va chạm MỚI
+    float getScaledFootOffset() const; // Hàm MỚI để sửa lỗi spawn "bay"
+    // ============================
     
     void moveLeft();
     void moveRight();
@@ -58,7 +73,6 @@ public:
     void stopMoving();
     
     void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms);
-    void updateAnimation(float deltaTime);
     void applyGravity(float deltaTime);
     
     void checkCollisionX(const std::vector<std::unique_ptr<Platform>>& platforms);
@@ -78,18 +92,16 @@ public:
     
     void draw(sf::RenderWindow& window);
 
-    // CÁC HÀM MỚI CHO COIN
+    // Coin/Heart
     void addCoin(int amount);
     int getTotalCoins() const;
     void setTotalCoins(int amount);
-
     void heal(int amount);
 
-    
+    // Powerups
     void activateSpeedBoost(float duration);
     bool getIsBoosted() const { return isBoosted; }
     float getBoostTimer() const { return boostTimer; }
-    
     void activateShield(float duration);
     bool getIsShielded() const { return isShielded; }
     float getShieldTimer() const { return shieldTimer; }
