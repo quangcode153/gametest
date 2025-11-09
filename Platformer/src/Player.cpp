@@ -368,20 +368,7 @@ void Player::activateShield(float duration) {
     shieldTimer = duration; 
     std::cout << "Shield activated for " << duration << "s or 1 hit!" << std::endl;
 }
-void Player::drawHitbox(sf::RenderWindow& window) {
-    // Lấy hitbox toàn cục (đã scale và di chuyển)
-    sf::FloatRect bounds = getHitbox(); 
-    
-    // Tạo một hình chữ nhật để vẽ
-    sf::RectangleShape shape;
-    shape.setPosition(bounds.left, bounds.top);
-    shape.setSize(sf::Vector2f(bounds.width, bounds.height));
-    shape.setFillColor(sf::Color(0, 0, 0, 0)); // Trong suốt
-    shape.setOutlineColor(sf::Color::Red);     // Viền màu đỏ
-    shape.setOutlineThickness(1.f);            // Độ dày 1 pixel
-    
-    window.draw(shape);
-}
+
 // Dán 2 hàm này vào Player.cpp
 
 Player::State Player::getCurrentState() const {
@@ -389,8 +376,6 @@ Player::State Player::getCurrentState() const {
 }
 
 bool Player::hasDeathAnimationFinished() const {
-    // Trả về TRUE chỉ khi:
-    // 1. Player đang ở trạng thái DEATH
-    // 2. Animation (không lặp) đã chạy xong frame cuối
+    
     return (currentState == State::DEATH && animManager->isFinished());
 }

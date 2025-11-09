@@ -52,7 +52,7 @@ private:
     void loadAnimations(); 
 
 public:
-    void drawHitbox(sf::RenderWindow& window);
+    
     Player();
     ~Player();
     Player::State getCurrentState() const;

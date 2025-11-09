@@ -551,7 +551,7 @@ void Game::renderPlaying() {
 
     if(player){
         player->draw(window);
-        player->drawHitbox(window);
+        
     } 
 
     
