@@ -191,7 +191,7 @@ void Game::loadResources() {
     }
     selectorSprite.setTexture(selectorTexture);
     selectorSprite.setOrigin(selectorTexture.getSize().x / 2.f, selectorTexture.getSize().y / 2.f);
-    selectorSprite.setScale(0.8f, 0.8f);
+    selectorSprite.setScale(0.25f, 0.25f);
 
     // === ĐỊNH NGHĨA CÁC NHÂN VẬT (ĐÃ SỬA LỖI WHITE BOX) ===
     characterList.clear();
