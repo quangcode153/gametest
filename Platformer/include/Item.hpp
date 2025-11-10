@@ -5,15 +5,15 @@
 #include <string>
 #include <memory>
 
-class Player; // Forward declare Player
+class Player;
 
 class Item {
 protected:
     sf::Sprite sprite;
     sf::Texture texture;
     bool collected;
-    float effectDuration;    // Duration of item's effect (0 for no duration, like coin)
-    float currentEffectTime; // Remaining effect time
+    float effectDuration;
+    float currentEffectTime;
 
 public:
     Item(float x, float y, const std::string& texturePath, float duration = 0.0f);
@@ -21,8 +21,6 @@ public:
 
     virtual void onCollect(Player& player) = 0;
     
-    // update is now virtual, CoinItem might or might not override it for animation
-    // If it's a static item, the base Item::update will be used (which just manages effectDuration)
     virtual void update(float deltaTime);
 
     void draw(sf::RenderWindow& window);
@@ -36,4 +34,4 @@ public:
     void resetEffectTime() { currentEffectTime = effectDuration; }
 };
 
-#endif // ITEM_HPP
+#endif

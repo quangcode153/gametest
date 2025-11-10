@@ -2,6 +2,7 @@
 #define SHIELDITEM_HPP
 
 #include "Item.hpp"
+#include "Player.hpp"
 
 class ShieldItem : public Item {
 private:
@@ -15,4 +16,4 @@ public:
     virtual void update(float deltaTime) override;
 };
 
-#endif // SHIELDITEM_HPP
+#endif

@@ -29,9 +29,9 @@ bool Enemy::loadTexture(const std::string& path) {
     sprite.setTexture(texture);
 
     sf::FloatRect bounds = sprite.getLocalBounds();
-    sprite.setOrigin(bounds.width / 2.f, bounds.height); 
-    
-    sprite.setScale(0.15f, 0.15f); 
+    sprite.setOrigin(bounds.width / 2.f, bounds.height);
+
+    sprite.setScale(0.15f, 0.15f);
 
     return true;
 }
@@ -50,15 +50,15 @@ sf::FloatRect Enemy::getBounds() const {
 
 void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms) {
     if (!alive) return;
-    
+
     velocity.y += 1000.f * deltaTime;
-    
-    patrol(); 
-    
+
+    patrol();
+
     sprite.move(velocity * deltaTime);
-    
+
     sf::FloatRect enemyBounds = getBounds();
-    
+
     for (const auto& platform : platforms) {
         sf::FloatRect platformBounds = platform->getBounds();
 
@@ -73,7 +73,7 @@ void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>
             }
         }
     }
-    
+
     checkBounds(platforms);
 }
 
@@ -107,12 +107,12 @@ void Enemy::checkBounds(const std::vector<std::unique_ptr<Platform>>& platforms)
         }
     }
 
-    if (!groundInFront && velocity.y == 0) { 
+    if (!groundInFront && velocity.y == 0) {
         movingRight = !movingRight;
     }
-    
+
     float currentScale = sprite.getScale().x;
-    if (currentScale < 0) currentScale = -currentScale; 
+    if (currentScale < 0) currentScale = -currentScale;
 
     if (movingRight) {
         sprite.setScale(currentScale, currentScale);

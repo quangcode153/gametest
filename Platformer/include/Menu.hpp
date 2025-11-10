@@ -5,12 +5,11 @@
 #include <string>
 #include <vector>
 
-// Định nghĩa các lựa chọn có trong menu
 enum class MenuOption {
-    PLAY, // Đổi tên cho khớp
-    SETTINGS, 
+    PLAY,
+    SETTINGS,
     EXIT,
-    COUNT // Đếm số lượng
+    COUNT
 };
 
 
@@ -28,19 +27,14 @@ public:
     void moveDown();
     MenuOption getSelectedOption() const;
 
-    bool isPlayButtonClicked(const sf::Vector2f& mousePos) const; // Đổi tên
+    bool isPlayButtonClicked(const sf::Vector2f& mousePos) const;
     bool isExitButtonClicked(const sf::Vector2f& mousePos) const;
 
 private:
     sf::Font font;
-    sf::Text titleText; // Tiêu đề "ADVENTURES OF A PRINCE"
-    sf::Text instructionsText; // Chữ "Press Enter..."
+    sf::Text titleText;
+    sf::Text instructionsText;
 
-    // === THAY ĐỔI: Bỏ vector Text và Shape ===
-    // std::vector<sf::Text> menuOptions;
-    // std::vector<sf::RectangleShape> menuButtonShapes; 
-    
-    // === THÊM VÀO: 6 TEXTURES VÀ 3 SPRITES ===
     sf::Texture texPlayNormal, texPlayHighlight;
     sf::Texture texSettingsNormal, texSettingsHighlight;
     sf::Texture texExitNormal, texExitHighlight;
@@ -48,9 +42,8 @@ private:
     sf::Sprite spritePlay;
     sf::Sprite spriteSettings;
     sf::Sprite spriteExit;
-    // ======================================
 
-    sf::RectangleShape background; // Lớp phủ màu tối (đã vô hiệu hóa)
+    sf::RectangleShape background;
 
     sf::Texture frameTexture;
     sf::Sprite frameSprite;
@@ -59,8 +52,7 @@ private:
     bool fontLoaded;
     float animationTimer;
 
-    // Hàm helper để scale sprite cho vừa
     void setSpriteToSize(sf::Sprite& sprite, const sf::Vector2f& size);
 };
 
-#endif // MENU_HPP
+#endif

@@ -1,99 +1,124 @@
-#ifndef GAME_HPP
-#define GAME_HPP
+#pragma once
 
 #include <SFML/Graphics.hpp>
-#include <memory>
 #include <vector>
-#include "Player.hpp"
-#include "Enemy.hpp"
-#include "Platform.hpp"
+#include <string>
+#include <memory>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
-#include "Menu.hpp"
+// Khai báo sớm
+class Player;
+class Platform;
+class Enemy;
+class Item;
+class Menu; 
+class CoinItem;
+class HeartItem;
+class SpeedBoostItem;
+class ShieldItem;
 
-// FORWARD DECLARATION CỦA ITEM
-class Item; 
-
+// Đã thêm CHARACTER_SELECTION
 enum class GameState {
     MENU,
     PLAYING,
-    PAUSED,
     GAME_OVER,
-    WIN
+    WIN,
+    CHARACTER_SELECTION 
+};
+
+// Cấu trúc để lưu dữ liệu thẻ bài
+struct CharacterData {
+    std::string name;
+    std::string assetFolder;
+    sf::Texture previewTexture;
+    sf::Sprite previewSprite;
 };
 
 class Game {
-private:
-    sf::RenderWindow window;
-    sf::Clock gameClock;
-    float totalTime;
-
-    GameState currentState;
-
-    sf::Texture backgroundTexture;
-    sf::Sprite background;
-    
-    sf::Texture gameOverBackgroundTexture;
-    sf::Sprite  gameOverBackgroundSprite;
-
-    // Background cho Menu
-    sf::Texture menuBackgroundTexture;
-    sf::Sprite menuBackgroundSprite;
-
-    sf::View camera;
-    sf::View uiView;
-
-    std::unique_ptr<Player> player;
-    std::vector<std::unique_ptr<Enemy>> enemies;
-    std::vector<std::unique_ptr<Platform>> platforms;
-    
-    
-    // BIẾN MỚI ĐỂ QUẢN LÝ CÁC ITEM
-    std::vector<std::unique_ptr<Item>> items; 
-
-    int currentLevel;
-    int maxLevels;
-    std::unique_ptr<Menu> menu;
-
-    sf::Font font;
-    sf::Text scoreText; 
-    bool fontLoaded; 
-
-    sf::Texture heartTexture;
-    sf::Sprite heartSprite;
-
-    sf::Text winText;       
-    sf::Text gameOverText;      
-    sf::Text restartText;       
-    sf::Text menuText;        
-
 public:
     Game();
     ~Game();
-
     void run();
 
 private:
     void initialize();
     void loadResources();
     void loadLevel(int levelNumber);
-
     void handleEvents();
     void update(float deltaTime);
     void render();
 
+    // Các hàm update con
     void updateMenu();
     void updatePlaying(float deltaTime);
     void updateGameOver();
     void updateWin();
 
+    // Các hàm render con
     void renderMenu();
     void renderPlaying();
     void renderGameOver();
     void renderWin();
 
+    // Các hàm logic
     void startGame();
     void restartGame();
     void returnToMenu();
-};
 
-#endif
+    sf::RenderWindow window;
+    sf::View camera;
+    sf::View uiView;
+    sf::Font font;
+    bool fontLoaded;
+    float totalTime;
+    sf::Clock gameClock;
+
+    GameState currentState;
+    int currentLevel;
+    int maxLevels;
+
+    // Tài nguyên Game
+    sf::Texture backgroundTexture;
+    sf::Sprite background;
+    sf::Texture heartTexture;
+    sf::Sprite heartSprite;
+
+    // Tài nguyên Menu
+    std::unique_ptr<Menu> menu;
+    sf::Texture menuBackgroundTexture;
+    sf::Sprite menuBackgroundSprite;
+
+    // Tài nguyên Game Over / Win
+    sf::Texture gameOverBackgroundTexture;
+    sf::Sprite gameOverBackgroundSprite;
+    sf::Text gameOverText;
+    sf::Text winText;
+    sf::Text restartText;
+    sf::Text menuText;
+
+    // Đối tượng game
+    std::unique_ptr<Player> player;
+    std::vector<std::unique_ptr<Platform>> platforms;
+    std::vector<std::unique_ptr<Enemy>> enemies;
+    std::vector<std::unique_ptr<Item>> items;
+
+    // === BIẾN MỚI CHO CHỌN NHÂN VẬT ===
+    std::vector<CharacterData> characterList;
+    int selectedCharacterIndex;
+
+    sf::Texture charSelectBackgroundTexture;
+    sf::Sprite charSelectBackgroundSprite;
+    sf::Texture selectorTexture; 
+    sf::Sprite selectorSprite;
+    
+    sf::Text charSelectTitle; 
+    sf::Text charNameText;    
+    sf::Text charSelectHelpText; 
+
+    // === HÀM MỚI CHO CHỌN NHÂN VẬT ===
+    void updateCharacterSelection(float deltaTime);
+    void renderCharacterSelection();
+    void updateSelectorPosition(); 
+};

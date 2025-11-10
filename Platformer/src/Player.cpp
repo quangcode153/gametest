@@ -1,17 +1,17 @@
 #include "Player.hpp"
+#include "AnimationManager.hpp"
+#include "Platform.hpp"
 #include <iostream>
 #include <algorithm>
-#include <cmath> 
-// #include "Constants.hpp" // (Nếu bạn không có file này, hãy xóa dòng này đi)
+#include <cmath>
 
 Player::Player() :
-    animManager(std::make_unique<AnimationManager>(sprite)), 
+    animManager(std::make_unique<AnimationManager>(sprite)),
     currentState(State::IDLE),
-    frameSize(180, 180), 
     facingRight(true),
     velocity(0.f, 0.f),
     moveSpeed(300.0f),
-    normalMoveSpeed(300.0f), 
+    normalMoveSpeed(300.0f),
     isBoosted(false),
     boostTimer(0.f),
     isShielded(false),
@@ -25,45 +25,65 @@ Player::Player() :
     invulnerabilityTimer(0.f),
     isPoweredUp(false),
     powerupTimer(0.f),
-    normalScale(1.0f), 
+    normalScale(1.0f),
     poweredScale(1.2f),
-    totalCoins(0) 
+    totalCoins(0),
+    currentAssetFolder("")
 {
-    normalMoveSpeed = moveSpeed; 
-    
-    float desiredHeight = 300.f; 
-    normalScale = desiredHeight / frameSize.y; 
-    poweredScale = normalScale * 1.2f; 
-    
-    sprite.setScale(normalScale, normalScale); 
-    
-    std::cout << "Player scale set to: " << normalScale << std::endl;
-
-    //
-    localHitbox = sf::FloatRect(76.f, 60.f, 40.f, 50.f); 
+    normalMoveSpeed = moveSpeed;
 }
 
 Player::~Player() {}
 
-bool Player::loadTexture(const std::string& path_ignored) {
-    loadAnimations();
-    return true; 
+bool Player::loadTexture(const std::string& folderPath) {
+    currentAssetFolder = folderPath;
+    loadAnimations(folderPath);
+    return true;
 }
 
-void Player::loadAnimations() {
-    std::string folder = "assets/characters/kiem/"; 
-    
-    animManager->addAnimation("IDLE",     folder + "Idle.png",     frameSize, 11, 0.1f);
-    animManager->addAnimation("RUNNING",  folder + "Run.png",      frameSize, 8,  0.08f);
-    animManager->addAnimation("JUMPING",  folder + "Jump.png",     frameSize, 3,  0.1f);
-    animManager->addAnimation("FALLING",  folder + "Fall.png",     frameSize, 3,  0.1f);
-    animManager->addAnimation("ATTACK1",  folder + "Attack1.png",  frameSize, 7,  0.07f);
-    animManager->addAnimation("ATTACK2",  folder + "Attack2.png",  frameSize, 7,  0.07f);
-    animManager->addAnimation("TAKE_HIT", folder + "Take Hit.png", frameSize, 4,  0.1f);
-    animManager->addAnimation("DEATH",    folder + "Death.png",    frameSize, 11, 0.1f);
-    
+void Player::loadAnimations(const std::string& folder) {
+    float currentDesiredHeight = 300.f;
+    if (animManager) {
+        animManager->clearAnimations();
+    }
+
+    if (folder.find("kiem") != std::string::npos) {
+        this->frameSize = sf::Vector2i(180, 180);
+        this->localHitbox = sf::FloatRect(76.f, 60.f, 40.f, 50.f);
+
+        currentDesiredHeight = 300.f;
+        animManager->addAnimation("IDLE", folder + "Idle.png", frameSize, 11, 0.1f);
+        animManager->addAnimation("RUNNING", folder + "Run.png", frameSize, 8, 0.08f);
+        animManager->addAnimation("JUMPING", folder + "Jump.png", frameSize, 3, 0.1f);
+        animManager->addAnimation("FALLING", folder + "Fall.png", frameSize, 3, 0.1f);
+        animManager->addAnimation("ATTACK1", folder + "Attack1.png", frameSize, 7, 0.07f);
+        animManager->addAnimation("TAKE_HIT", folder + "Take Hit.png", frameSize, 4, 0.1f);
+        animManager->addAnimation("DEATH", folder + "Death.png", frameSize, 11, 0.1f);
+        animManager->addAnimation("ATTACK2", folder + "Attack2.png", frameSize, 7, 0.07f);
+
+    } else if (folder.find("phep") != std::string::npos) {
+        this->frameSize = sf::Vector2i(231, 190);
+        this->localHitbox = sf::FloatRect(79.f, 55.f, 55.f, 85.f);
+
+        currentDesiredHeight = 200.f;
+        animManager->addAnimation("IDLE", folder + "Idle.png", frameSize, 6, 0.1f);
+        animManager->addAnimation("RUNNING", folder + "Run.png", frameSize, 8, 0.08f);
+        animManager->addAnimation("JUMPING", folder + "Jump.png", frameSize, 2, 0.1f);
+        animManager->addAnimation("FALLING", folder + "Fall.png", frameSize, 2, 0.1f);
+        animManager->addAnimation("ATTACK1", folder + "Attack1.png", frameSize, 8, 0.07f);
+        animManager->addAnimation("TAKE_HIT", folder + "Take Hit.png", frameSize, 4, 0.1f);
+        animManager->addAnimation("DEATH", folder + "Death.png", frameSize, 7, 0.1f);
+        animManager->addAnimation("CASTING", folder + "Attack2.png", frameSize, 8, 0.12f);
+    }
+
+    normalScale = currentDesiredHeight / this->frameSize.y;
+    poweredScale = normalScale * 1.2f;
+
+    sprite.setScale(normalScale, normalScale);
+    std::cout << "Player scale set to: " << normalScale << " (Base height: " << this->frameSize.y << ")" << std::endl;
+
     setAnimation(State::IDLE);
-    std::cout << "Player animations loaded!" << std::endl;
+    std::cout << "Player animations loaded from: " << folder << std::endl;
 }
 
 
@@ -75,30 +95,21 @@ sf::Vector2f Player::getPosition() const {
     return sprite.getPosition();
 }
 
-// === CÁC HÀM HITBOX MỚI ===
-
-// Hàm getBounds() cũ, trả về khung ảnh 180x180
 sf::FloatRect Player::getBounds() const {
     return sprite.getGlobalBounds();
 }
 
-// Hàm getHitbox() MỚI, trả về khung va chạm thật
 sf::FloatRect Player::getHitbox() const {
-    // Áp dụng transform (vị trí, scale) của sprite vào localHitbox
     return sprite.getTransform().transformRect(localHitbox);
 }
 
-// Hàm MỚI, lấy khoảng cách từ TÂM sprite đến CHÂN hitbox (đã scale)
 float Player::getScaledFootOffset() const {
-    // Lấy vị trí Y của chân hitbox (so với tâm 0,0 của hitbox)
-    // (localHitbox.top + localHitbox.height)
-    // (Ví dụ: -70 + 160 = 90)
-    float localFootY = localHitbox.top + localHitbox.height;
-    
-    // Nhân với scale Y (dùng abs để tránh lỗi lật sprite)
-    return localFootY * std::abs(sprite.getScale().y);
+    if (currentAssetFolder.find("phep") != std::string::npos) {
+        return 0.f;
+    } else {
+        return (localHitbox.top + localHitbox.height) * std::abs(sprite.getScale().y);
+    }
 }
-// =========================
 
 
 void Player::moveLeft() {
@@ -112,9 +123,10 @@ void Player::moveRight() {
 }
 
 void Player::jump() {
-    if (isOnGround) {
+    if (isOnGround && currentState != State::JUMPING && currentState != State::FALLING) {
         velocity.y = jumpStrength;
         isOnGround = false;
+        setAnimation(State::JUMPING);
     }
 }
 
@@ -122,198 +134,203 @@ void Player::stopMoving() {
     velocity.x = 0.f;
 }
 
-
 void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms) {
-    
-    // 1. Cập nhật logic hiệu ứng
+
     if (invulnerabilityTimer > 0.f) invulnerabilityTimer -= deltaTime;
     if (isPoweredUp) {
-    powerupTimer -= deltaTime;
-    if (powerupTimer <= 0.f) {
-        isPoweredUp = false;
-        // Tùy chọn: reset scale nếu bạn muốn
-        // float currentScale = isPoweredUp ? poweredScale : normalScale;
-        // sprite.setScale(currentScale, currentScale); 
+        powerupTimer -= deltaTime;
+        if (powerupTimer <= 0.f) {
+            isPoweredUp = false;
+        }
     }
-}
-if (isBoosted) {
-    boostTimer -= deltaTime;
-    if (boostTimer <= 0.f) {
-        isBoosted = false;
-        moveSpeed = normalMoveSpeed; // <-- Rất quan trọng: Trả tốc độ về bình thường
-        std::cout << "Speed Boost expired!" << std::endl;
+    if (isBoosted) {
+        boostTimer -= deltaTime;
+        if (boostTimer <= 0.f) {
+            isBoosted = false;
+            moveSpeed = normalMoveSpeed;
+            std::cout << "Speed Boost expired!" << std::endl;
+        }
     }
-}
-if (isShielded) {
-    shieldTimer -= deltaTime;
-    if (shieldTimer <= 0.f) {
-        isShielded = false;
-        std::cout << "Shield expired!" << std::endl;
+    if (isShielded) {
+        shieldTimer -= deltaTime;
+        if (shieldTimer <= 0.f) {
+            isShielded = false;
+            std::cout << "Shield expired!" << std::endl;
+        }
     }
-}
 
-    // Không cho phép di chuyển nếu đang Chết
     if (currentState == State::DEATH) {
         animManager->update(deltaTime);
-        return; 
+        return;
     }
-    
-    // 2. Cập nhật vật lý
+
     applyGravity(deltaTime);
-    
-    sprite.move(velocity.x * deltaTime, 0.f); 
-    checkCollisionX(platforms); 
 
-    sprite.move(0.f, velocity.y * deltaTime); 
-    checkCollisionY(platforms); 
+    sprite.move(velocity.x * deltaTime, 0.f);
+    checkCollisionX(platforms);
 
-    // 3. QUYẾT ĐỊNH TRẠNG THÁI ANIMATION
+    sprite.move(0.f, velocity.y * deltaTime);
+    checkCollisionY(platforms);
+
     bool animFinished = animManager->isFinished();
+    State nextState = currentState;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) && currentState != State::JUMPING && currentState != State::FALLING) {
-        setAnimation(State::ATTACK1);
+    if (currentState == State::ATTACK1 && !animFinished) { /* Giữ nguyên */ }
+    else if (currentState == State::ATTACK2 && !animFinished) { /* Giữ nguyên */ }
+    else if (currentState == State::CASTING && !animFinished) { /* Giữ nguyên */ }
+    else if (currentState == State::TAKE_HIT && !animFinished) { /* Giữ nguyên */ }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) && isOnGround) {
+        nextState = State::ATTACK1;
     }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K) && currentState != State::JUMPING && currentState != State::FALLING) {
-        setAnimation(State::ATTACK2);
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K) && isOnGround) {
+        if (currentAssetFolder.find("phep") != std::string::npos) {
+            nextState = State::CASTING;
+        } else {
+            nextState = State::ATTACK2;
+        }
     }
     else if (velocity.y < -0.1f) {
-        setAnimation(State::JUMPING);
-    } 
+        nextState = State::JUMPING;
+    }
     else if (velocity.y > 0.1f && !isOnGround) {
-        setAnimation(State::FALLING);
-    } 
+        nextState = State::FALLING;
+    }
     else if (std::abs(velocity.x) > 0.1f && isOnGround) {
-        setAnimation(State::RUNNING);
-    } 
+        nextState = State::RUNNING;
+    }
     else if (isOnGround) {
-        if ((currentState == State::TAKE_HIT || currentState == State::ATTACK1 || currentState == State::ATTACK2) && animFinished) {
-            setAnimation(State::IDLE);
-        }
-        if (currentState != State::TAKE_HIT && currentState != State::ATTACK1 && currentState != State::ATTACK2) {
-             setAnimation(State::IDLE);
-        }
+        nextState = State::IDLE;
     }
 
-    // 4. Cập nhật hình ảnh
+    if (nextState != currentState || (currentState != State::IDLE && currentState != State::RUNNING && currentState != State::FALLING && animFinished)) {
+        setAnimation(nextState);
+    }
+
+
     animManager->update(deltaTime);
 
-    // 5. Lật sprite
     float currentScale = isPoweredUp ? poweredScale : normalScale;
     float scaleX = (facingRight ? currentScale : -currentScale);
-    sprite.setScale(scaleX, currentScale); 
+    sprite.setScale(scaleX, currentScale);
 }
 
 void Player::setAnimation(State newState) {
-    if (currentState == newState) return; 
-    if ((currentState == State::ATTACK1 || currentState == State::ATTACK2 || currentState == State::TAKE_HIT) && !animManager->isFinished()) return;
     if (currentState == State::DEATH) return;
+    if (newState == currentState) return;
+
+    if ((currentState == State::ATTACK1 || currentState == State::ATTACK2 || currentState == State::CASTING || currentState == State::TAKE_HIT) && !animManager->isFinished()) {
+        if (!(newState == State::JUMPING || newState == State::FALLING || newState == State::DEATH)) {
+            return;
+        }
+    }
 
     currentState = newState;
-    
+
     switch (currentState) {
-        case State::IDLE:     animManager->play("IDLE", true);     break;
-        case State::RUNNING:  animManager->play("RUNNING", true);  break;
-        case State::JUMPING:  animManager->play("JUMPING", false); break; 
-        case State::FALLING:  animManager->play("FALLING", true);  break; 
-        case State::ATTACK1:  animManager->play("ATTACK1", false); break; 
-        case State::ATTACK2:  animManager->play("ATTACK2", false); break; 
-        case State::TAKE_HIT: animManager->play("TAKE_HIT", false);break; 
-        case State::DEATH:    animManager->play("DEATH", false);   break; 
+        case State::IDLE:     animManager->play("IDLE", true);   break;
+        case State::RUNNING:  animManager->play("RUNNING", true);   break;
+        case State::JUMPING:  animManager->play("JUMPING", false);  break;
+        case State::FALLING:  animManager->play("FALLING", true);   break;
+        case State::ATTACK1:  animManager->play("ATTACK1", false);  break;
+        case State::ATTACK2:  animManager->play("ATTACK2", false);  break;
+        case State::CASTING:  animManager->play("CASTING", false);  break;
+        case State::TAKE_HIT: animManager->play("TAKE_HIT", false); break;
+        case State::DEATH:    animManager->play("DEATH", false);   break;
     }
 }
 
 void Player::applyGravity(float deltaTime) {
-    velocity.y += gravity * deltaTime; 
+    velocity.y += gravity * deltaTime;
     if (velocity.y > maxFallSpeed)
         velocity.y = maxFallSpeed;
 }
 
-// ==========================================================
-// === VA CHẠM DÙNG HITBOX (THAY VÌ getBounds) ===
-// ==========================================================
-
-// Trong file: Player.cpp
-// THAY THẾ HÀM NÀY
-
-// Trong file: Player.cpp
-// THAY THẾ HÀM NÀY
-
 void Player::checkCollisionX(const std::vector<std::unique_ptr<Platform>>& platforms) {
-    sf::FloatRect playerBounds = getHitbox(); 
-    
+    sf::FloatRect playerBounds = getHitbox();
+
     for (const auto& platform : platforms) {
-        sf::FloatRect platformBounds = platform->getBounds(); 
-        
+        sf::FloatRect platformBounds = platform->getBounds();
+
         if (playerBounds.intersects(platformBounds)) {
-            // Vì chúng ta chỉ di chuyển X trước khi gọi hàm này,
-            // nên bất kỳ va chạm nào cũng là va chạm X.
-            
-            if (velocity.x > 0) { // Di chuyển sang phải
+            if (velocity.x > 0) {
                 sprite.move(-(playerBounds.left + playerBounds.width - platformBounds.left), 0.f);
-            } else if (velocity.x < 0) { // Di chuyển sang trái
+            } else if (velocity.x < 0) {
                 sprite.move(platformBounds.left + platformBounds.width - playerBounds.left, 0.f);
             }
             velocity.x = 0;
-
-            // Cập nhật lại bounds sau khi di chuyển, để vòng lặp tiếp theo (nếu có) chính xác
-            playerBounds = getHitbox(); 
-        }
-    }
-}
-
-// Trong file: Player.cpp
-// THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY
-
-// Trong file: Player.cpp
-// THAY THẾ HÀM NÀY
-
-// Trong file: Player.cpp
-// THAY THẾ HÀM NÀY
-
-void Player::checkCollisionY(const std::vector<std::unique_ptr<Platform>>& platforms) {
-    isOnGround = false;
-    sf::FloatRect playerBounds = getHitbox(); 
-
-    for (const auto& platform : platforms) {
-        sf::FloatRect platformBounds = platform->getBounds(); 
-
-        if (playerBounds.intersects(platformBounds)) {
-            // Vì chúng ta chỉ di chuyển Y trước khi gọi hàm này,
-            // nên bất kỳ va chạm nào cũng là va chạm Y.
-
-            if (velocity.y > 0) { // Đang rơi xuống
-                sprite.move(0.f, -(playerBounds.top + playerBounds.height - platformBounds.top));
-                velocity.y = 0;
-                isOnGround = true; // QUAN TRỌNG: Đặt isOnGround ở đây
-            } 
-            else if (velocity.y < 0) { // Đang nhảy lên (đụng đầu)
-                sprite.move(0.f, platformBounds.top + platformBounds.height - playerBounds.top);
-                velocity.y = 0;
-            }
-
-            // Cập nhật lại bounds sau khi di chuyển
             playerBounds = getHitbox();
         }
     }
 }
-// ==========================================================
 
-void Player::takeDamage() {
-    // ... (code này không đổi)
-    if (currentState == State::DEATH) return; 
-    if (invulnerabilityTimer <= 0.f && !isPoweredUp) {
-        if (isShielded) { /* ... */ } 
-        else { 
-            health--;
-            invulnerabilityTimer = 2.0f; 
-            std::cout << "Player hit! Health: " << health << "\n";
-            if (health <= 0) { setAnimation(State::DEATH); } 
-            else { setAnimation(State::TAKE_HIT); }
+void Player::checkCollisionY(const std::vector<std::unique_ptr<Platform>>& platforms) {
+    isOnGround = false;
+    sf::FloatRect playerBounds = getHitbox();
+
+    for (const auto& platform : platforms) {
+        sf::FloatRect platformBounds = platform->getBounds();
+
+        if (playerBounds.intersects(platformBounds)) {
+            if (velocity.y > 0) {
+                sprite.move(0.f, -(playerBounds.top + playerBounds.height - platformBounds.top));
+                velocity.y = 0;
+                isOnGround = true;
+            }
+            else if (velocity.y < 0) {
+                sprite.move(0.f, platformBounds.top + platformBounds.height - playerBounds.top);
+                velocity.y = 0;
+            }
+            playerBounds = getHitbox();
         }
     }
 }
 
-// ... (code các hàm còn lại: canTakeDamage, activatePowerup, isInvulnerable, draw, addCoin, heal, ... không đổi)
+void Player::draw(sf::RenderWindow& window) {
+    if (invulnerabilityTimer > 0.f) {
+        if (static_cast<int>(invulnerabilityTimer * 10) % 2 == 0) return;
+    }
+    if (isPoweredUp)
+        sprite.setColor(sf::Color(255, 255, 150));
+    else if (isBoosted)
+        sprite.setColor(sf::Color(100, 100, 255));
+    else if (isShielded)
+        sprite.setColor(sf::Color(200, 200, 255, 200));
+    else
+        sprite.setColor(sf::Color::White);
+
+    window.draw(sprite);
+
+    
+}
+
+void Player::takeDamage() {
+    if (currentState == State::DEATH) return;
+
+
+    if (invulnerabilityTimer > 0.f || isPoweredUp) {
+        return;
+    }
+
+
+    if (isShielded) {
+        isShielded = false;
+        shieldTimer = 0.f;
+        std::cout << "Shield blocked 1 hit and broke!" << std::endl;
+
+        invulnerabilityTimer = 1.0f;
+        setAnimation(State::TAKE_HIT);
+    }
+
+    else {
+        health--;
+        invulnerabilityTimer = 2.0f;
+        std::cout << "Player hit! Health: " << health << "\n";
+        if (health <= 0) { setAnimation(State::DEATH); }
+        else { setAnimation(State::TAKE_HIT); }
+    }
+}
+
+
 bool Player::canTakeDamage() const {
     return invulnerabilityTimer <= 0.f && !isPoweredUp;
 }
@@ -328,22 +345,6 @@ bool Player::isInvulnerable() const {
     return invulnerabilityTimer > 0.f || isPoweredUp || isShielded;
 }
 
-void Player::draw(sf::RenderWindow& window) {
-    if (invulnerabilityTimer > 0.f) {
-        if (static_cast<int>(invulnerabilityTimer * 10) % 2 == 0) return;
-    }
-    if (isPoweredUp)
-        sprite.setColor(sf::Color(255, 255, 150));
-    else if (isBoosted) 
-        sprite.setColor(sf::Color(100, 100, 255));
-    else if (isShielded)
-        sprite.setColor(sf::Color(200, 200, 255, 200));
-    else
-        sprite.setColor(sf::Color::White);
-        
-    window.draw(sprite);
-}
-
 void Player::addCoin(int amount) { totalCoins += amount; }
 int Player::getTotalCoins() const { return totalCoins; }
 void Player::setTotalCoins(int amount) { totalCoins = amount; }
@@ -351,31 +352,30 @@ void Player::heal(int amount) {
     health += amount;
     if (health > maxHealth) { health = maxHealth; }
     if (health == maxHealth && currentState == State::DEATH) {
-        // Hãy hồi sinh player
-        currentState = State::IDLE; 
-        animManager->play("IDLE", true); // Buộc nó quay về animation đứng yên
+        currentState = State::IDLE;
+        animManager->play("IDLE", true);
     }
     std::cout << "Player healed " << amount << " health. Current health: " << health << "\n";
 }
 void Player::activateSpeedBoost(float duration) {
     if (!isBoosted) { moveSpeed = normalMoveSpeed * 1.5f; }
     isBoosted = true;
-    boostTimer = duration; 
+    boostTimer = duration;
     std::cout << "Speed Boost activated for " << duration << "s!" << std::endl;
 }
 void Player::activateShield(float duration) {
     isShielded = true;
-    shieldTimer = duration; 
+    shieldTimer = duration;
     std::cout << "Shield activated for " << duration << "s or 1 hit!" << std::endl;
 }
 
-// Dán 2 hàm này vào Player.cpp
-
-Player::State Player::getCurrentState() const {
+State Player::getCurrentState() const {
     return currentState;
 }
 
 bool Player::hasDeathAnimationFinished() const {
-    
-    return (currentState == State::DEATH && animManager->isFinished());
+    if (currentState == State::DEATH && animManager) {
+        return animManager->isFinished();
+    }
+    return false;
 }
