@@ -1,7 +1,7 @@
 #include "HeartItem.hpp"
 #include <iostream>
 #include <cmath>
-
+#include "ResourceManager.hpp"
 HeartItem::HeartItem(float x, float y)
     : Item(x, y, "assets/items/tim.png", 0.0f),
       bobbingTimer(0.f)
@@ -14,6 +14,10 @@ void HeartItem::onCollect(Player& player) {
     if (!collected) {
         if (player.getHealth() < player.getMaxHealth()) {
             player.heal(1);
+            ResourceManager::getInstance().playSound("heartsfx.wav");
+        
+        // Goi ham cha de danh dau item da duoc nhat
+            Item::onCollect(player);
             this->collected = true;
             std::cout << "Heart collected! Player current health: " << player.getHealth() << std::endl;
         } else {

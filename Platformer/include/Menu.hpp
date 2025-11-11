@@ -28,6 +28,7 @@ public:
     MenuOption getSelectedOption() const;
 
     bool isPlayButtonClicked(const sf::Vector2f& mousePos) const;
+    bool isSettingsButtonClicked(const sf::Vector2f& mousePos) const;
     bool isExitButtonClicked(const sf::Vector2f& mousePos) const;
 
 private:

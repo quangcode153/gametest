@@ -1,5 +1,6 @@
 #include "Item.hpp"
 #include <iostream>
+#include "Player.hpp"
 
 Item::Item(float x, float y, const std::string& texturePath, float duration)
     : collected(false),
@@ -55,4 +56,13 @@ bool Item::isCollected() const {
 
 void Item::setCollected(bool val) {
     collected = val;
+}
+
+// === ĐÂY LÀ HÀM BỊ THIẾU MÀ TÔI ĐÃ THÊM VÀO ===
+void Item::onCollect(Player& player) {
+    // Hàm onCollect cơ sở này chỉ cần làm một việc:
+    // Đánh dấu item này đã được thu thập.
+    this->collected = true;
+    
+    // (Không cần làm gì thêm ở hàm cơ sở)
 }

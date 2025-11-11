@@ -4,7 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-
+#include "ResourceManager.hpp"
 Player::Player() :
     animManager(std::make_unique<AnimationManager>(sprite)),
     currentState(State::IDLE),
@@ -127,6 +127,7 @@ void Player::jump() {
         velocity.y = jumpStrength;
         isOnGround = false;
         setAnimation(State::JUMPING);
+        ResourceManager::getInstance().playSound("jumpsfx.wav");
     }
 }
 
@@ -231,12 +232,24 @@ void Player::setAnimation(State newState) {
         case State::RUNNING:  animManager->play("RUNNING", true);   break;
         case State::JUMPING:  animManager->play("JUMPING", false);  break;
         case State::FALLING:  animManager->play("FALLING", true);   break;
-        case State::ATTACK1:  animManager->play("ATTACK1", false);  break;
-        case State::ATTACK2:  animManager->play("ATTACK2", false);  break;
-        case State::CASTING:  animManager->play("CASTING", false);  break;
+
+        case State::ATTACK1:  
+            animManager->play("ATTACK1", false);
+            ResourceManager::getInstance().playSound("danhkiem2sfx.wav");
+            break;
+        case State::ATTACK2:
+            animManager->play("ATTACK2", false);  
+            ResourceManager::getInstance().playSound("danhkiemsfx.wav");
+            break;
+        case State::CASTING:
+          animManager->play("CASTING", false);  
+          ResourceManager::getInstance().playSound("danhphepsfx.wav");
+          break;
         case State::TAKE_HIT: animManager->play("TAKE_HIT", false); break;
         case State::DEATH:    animManager->play("DEATH", false);   break;
     }
+    
+    
 }
 
 void Player::applyGravity(float deltaTime) {
@@ -310,13 +323,11 @@ void Player::takeDamage() {
     if (invulnerabilityTimer > 0.f || isPoweredUp) {
         return;
     }
-
-
     if (isShielded) {
         isShielded = false;
         shieldTimer = 0.f;
         std::cout << "Shield blocked 1 hit and broke!" << std::endl;
-
+        ResourceManager::getInstance().playSound("shieldsfx.wav");
         invulnerabilityTimer = 1.0f;
         setAnimation(State::TAKE_HIT);
     }
@@ -326,7 +337,10 @@ void Player::takeDamage() {
         invulnerabilityTimer = 2.0f;
         std::cout << "Player hit! Health: " << health << "\n";
         if (health <= 0) { setAnimation(State::DEATH); }
-        else { setAnimation(State::TAKE_HIT); }
+        else { 
+            setAnimation(State::TAKE_HIT);
+            ResourceManager::getInstance().playSound("playerdamesfx.wav");
+        }
     }
 }
 

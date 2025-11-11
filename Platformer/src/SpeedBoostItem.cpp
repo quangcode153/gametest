@@ -2,7 +2,7 @@
 #include "Player.hpp"
 #include <iostream>
 #include <cmath>
-
+#include "ResourceManager.hpp"
 SpeedBoostItem::SpeedBoostItem(float x, float y)
     : Item(x, y, "assets/items/itemSpeed.png", 5.0f),
       bobbingTimer(0.f)
@@ -15,6 +15,7 @@ void SpeedBoostItem::onCollect(Player& player) {
     if (!collected) {
         player.activateSpeedBoost(this->getEffectDuration());
         this->collected = true;
+        ResourceManager::getInstance().playSound("speedItemsfx.wav");
         std::cout << "Speed Boost collected!" << std::endl;
     }
 }

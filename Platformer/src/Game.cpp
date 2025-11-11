@@ -15,6 +15,8 @@
 #include "HeartItem.hpp"
 #include "SpeedBoostItem.hpp"
 #include "ShieldItem.hpp"
+#include "ResourceManager.hpp"
+#include "ResourceManager.hpp"
 
 Game::Game() :
     totalTime(0.f),
@@ -38,7 +40,7 @@ Game::~Game() {}
 void Game::initialize() {
     std::cout << "=== Initializing Game ===\n";
     loadResources();
-
+    ResourceManager::getInstance().loadResources();
     menu = std::make_unique<Menu>();
 
     std::string menuFontPath = "assets/fonts/arial.ttf";
@@ -49,6 +51,22 @@ void Game::initialize() {
 
     menu->initialize();
     std::cout << "Game initialized!\n";
+    spriteMusicButton.setTexture(texMusic); // Sẽ cập nhật lại sau
+    sf::FloatRect mbBounds = spriteMusicButton.getLocalBounds();
+    spriteMusicButton.setOrigin(mbBounds.width / 2.f, mbBounds.height / 2.f);
+    spriteMusicButton.setPosition(600.f, 350.f);
+    spriteMusicButton.setScale(0.1f, 0.1f);
+    // Đặt đúng texture (Bật/Tắt) ngay từ đầu
+    updateMusicButtonTexture(); 
+
+    // Thiết lập chữ "Quay Lại"
+    spriteBackArrow.setTexture(texBackArrow);
+    sf::FloatRect arrowBounds = spriteBackArrow.getLocalBounds();
+    spriteBackArrow.setOrigin(arrowBounds.width / 2.f, arrowBounds.height / 2.f);
+    spriteBackArrow.setScale(0.24f, 0.24f); // Điều chỉnh kích thước mũi tên nếu cần
+    // Đặt ở góc dưới bên trái, cách mép 50 pixel
+    spriteBackArrow.setPosition(50.f + arrowBounds.width * spriteBackArrow.getScale().x / 2.f, 
+                                window.getSize().y - (50.f + arrowBounds.height * spriteBackArrow.getScale().y / 2.f));
 }
 
 void Game::loadResources() {
@@ -151,7 +169,9 @@ void Game::loadResources() {
         menuText.setPosition(720.f, 400.f);
 
         std::cout << "✓ UI Texts initialized with font.\n";
-
+        if (!texBackArrow.loadFromFile("assets/quaylai.png")) {
+        std::cerr << "!!! LOI: Khong tai duoc assets/quaylai.png\n";
+        }
         charSelectTitle.setFont(font);
         charSelectTitle.setString("CHON NHAN VAT");
         charSelectTitle.setCharacterSize(60);
@@ -189,9 +209,17 @@ void Game::loadResources() {
     if (!selectorTexture.loadFromFile("assets/selector_arrow.png")) {
         std::cerr << "!!! LOI: Khong tai duoc assets/selector_arrow.png\n";
     }
+
     selectorSprite.setTexture(selectorTexture);
     selectorSprite.setOrigin(selectorTexture.getSize().x / 2.f, selectorTexture.getSize().y / 2.f);
     selectorSprite.setScale(0.25f, 0.25f);
+
+    if (!texMusic.loadFromFile("assets/button_music.png")) {
+        std::cerr << "!!! LOI: Khong tai duoc assets/button_music.png\n";
+    }
+    if (!texMusicMuted.loadFromFile("assets/button_music_muted.png")) {
+        std::cerr << "!!! LOI: Khong tai duoc assets/button_music_muted.png\n";
+    }
 
     // === ĐỊNH NGHĨA CÁC NHÂN VẬT (ĐÃ SỬA LỖI WHITE BOX) ===
     characterList.clear();
@@ -355,8 +383,22 @@ void Game::handleEvents() {
                     if (menu->isPlayButtonClicked(mousePos)) {
                         currentState = GameState::CHARACTER_SELECTION;
                     }
+                    else if (menu->isSettingsButtonClicked(mousePos)) {
+                        currentState = GameState::SETTINGS; // Chuyển sang màn hình Cài Đặt
+                    }
                     else if (menu->isExitButtonClicked(mousePos)) {
                         window.close();
+                    }
+                }
+                else if (currentState == GameState::SETTINGS) {
+                    if (spriteMusicButton.getGlobalBounds().contains(mousePos)) {
+                        // Nhấn vào nút Tắt/Mở nhạc
+                        ResourceManager::getInstance().toggleMusicMute();
+                        updateMusicButtonTexture(); // Cập nhật hình ảnh nút
+                    }
+                    if (spriteBackArrow.getGlobalBounds().contains(mousePos)) {
+                        // Nhấn vào chữ "Quay Lại"
+                        currentState = GameState::MENU;
                     }
                 }
             }
@@ -417,11 +459,18 @@ void Game::handleEvents() {
                     if (option == MenuOption::PLAY) {
                         currentState = GameState::CHARACTER_SELECTION;
                     }
+                    else if (option == MenuOption::SETTINGS) {
+                        currentState = GameState::SETTINGS; // Chuyển sang màn hình Cài Đặt
+                    }
                     else if (option == MenuOption::EXIT) window.close();
                 }
                 else if (event.key.code == sf::Keyboard::Escape) window.close();
             }
-
+             else if (currentState == GameState::SETTINGS) {
+                if (event.key.code == sf::Keyboard::Escape) {
+                    currentState = GameState::MENU; // Quay lại Menu
+                }
+            }
             else if (currentState == GameState::PLAYING) {
                 if (event.key.code == sf::Keyboard::Space) player->jump();
                 else if (event.key.code == sf::Keyboard::Escape) returnToMenu();
@@ -438,6 +487,7 @@ void Game::update(float deltaTime) {
         case GameState::PLAYING: updatePlaying(deltaTime); break;
         case GameState::GAME_OVER: updateGameOver(); break;
         case GameState::WIN: updateWin(); break;
+        case GameState::SETTINGS: updateSettings(deltaTime); break;
         default: break;
     }
 }
@@ -462,6 +512,7 @@ void Game::updatePlaying(float deltaTime) {
         if (!item->isCollected()) {
             item->update(deltaTime);
             if (player->getHitbox().intersects(item->getBounds())) {
+                
                 item->onCollect(*player);
             }
         }
@@ -480,6 +531,7 @@ void Game::updatePlaying(float deltaTime) {
             float overlap = playerBottom - enemyTop;
             if (player->getVelocity().y > 0 && overlap < 25.f && enemyBounds.top > playerBounds.top) {
                 enemy->kill();
+                ResourceManager::getInstance().playSound("enemydiesfx.wav");
             }
             else{
                 player->takeDamage();
@@ -488,12 +540,17 @@ void Game::updatePlaying(float deltaTime) {
     }
 
     if (player->hasDeathAnimationFinished()) {
+
         currentState = GameState::GAME_OVER;
+        ResourceManager::getInstance().stopMusic(); // <--- THÊM ĐỂ DỪNG NHẠC
+        ResourceManager::getInstance().playSound("diesfx.wav");
         std::cout << "--- Player DEATH animation finished! State -> GAME_OVER ---" << std::endl;
     }
     if (player->getPosition().y > window.getSize().y + 100.f) {
         if (currentState == GameState::PLAYING) {
             currentState = GameState::GAME_OVER;
+            ResourceManager::getInstance().stopMusic(); // <--- THÊM ĐỂ DỪNG NHẠC
+            ResourceManager::getInstance().playSound("diesfx.wav");
             std::cout << "--- Player fell off map! State -> GAME_OVER ---" << std::endl;
         }
     }
@@ -508,6 +565,8 @@ void Game::updatePlaying(float deltaTime) {
             currentLevel++;
             if (currentLevel > maxLevels) {
                 currentState = GameState::WIN;
+                ResourceManager::getInstance().stopMusic(); // <--- THÊM ĐỂ DỪNG NHẠC
+                ResourceManager::getInstance().playSound("winsfx.wav");
                 std::cout << "--- Player Wins! (All levels complete) ---" << std::endl;
             } else {
                 std::cout << "--- Level complete! Loading level " << currentLevel << " ---" << std::endl;
@@ -542,6 +601,9 @@ void Game::render() {
             break;
         case GameState::WIN:
             renderWin();
+            break;
+        case GameState::SETTINGS:
+            renderSettings(); 
             break;
         default: break;
     }
@@ -668,6 +730,7 @@ void Game::startGame() {
     currentLevel = 1;
     loadLevel(currentLevel);
     currentState = GameState::PLAYING;
+    ResourceManager::getInstance().playMusic("musicgame.mp3");
 }
 
 void Game::restartGame() {
@@ -679,6 +742,7 @@ void Game::restartGame() {
 
     loadLevel(currentLevel);
     currentState = GameState::PLAYING;
+    ResourceManager::getInstance().playMusic("musicgame.mp3");
 }
 
 
@@ -688,10 +752,14 @@ void Game::returnToMenu() {
     if (player) {
         player->setTotalCoins(0);
     }
+    ResourceManager::getInstance().playMusic("musicmenu.mp3");
 }
 
 void Game::run() {
     std::cout << "\n=== Game Loop Started ===\n";
+    if (currentState == GameState::MENU) {
+        ResourceManager::getInstance().playMusic("musicmenu.mp3");
+    }
     sf::Clock deltaClock;
     while (window.isOpen()) {
         handleEvents();
@@ -744,4 +812,59 @@ void Game::updateSelectorPosition() {
         charNameText.setOrigin(bounds.width / 2.f, bounds.height / 2.f);
         charNameText.setPosition(selectorX, selectorY + 80.f);
     }
+}
+// === DÁN CÁC HÀM MỚI NÀY VÀO CUỐI FILE Game.cpp ===
+
+// Hàm này giúp cập nhật hình ảnh nút Bật/Tắt
+void Game::updateMusicButtonTexture() {
+    if (ResourceManager::getInstance().isMusicMuted()) {
+        spriteMusicButton.setTexture(texMusicMuted);
+    } else {
+        spriteMusicButton.setTexture(texMusic);
+    }
+}
+
+// Hàm update cho màn hình Settings
+void Game::updateSettings(float deltaTime) {
+    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), uiView);
+    
+    // Scale cơ sở bạn muốn cho nút loa (giống trong initialize)
+    float musicButtonBaseScale = 0.1f; 
+    
+    // Scale cơ sở cho nút quay lại (giống trong initialize)
+    float backArrowBaseScale = 0.24f; 
+
+    // === HÀM updateSettings ĐÃ SỬA ===
+    
+    // Xử lý hover cho nút loa
+    if (spriteMusicButton.getGlobalBounds().contains(mousePos)) {
+        // Phóng to 110% CỦA scale cơ sở
+        spriteMusicButton.setScale(musicButtonBaseScale * 1.1f, musicButtonBaseScale * 1.1f); 
+    } else {
+        // Trở về 100% CỦA scale cơ sở
+        spriteMusicButton.setScale(musicButtonBaseScale, musicButtonBaseScale); 
+    }
+
+    // Xử lý hover cho nút quay lại
+    if (spriteBackArrow.getGlobalBounds().contains(mousePos)) {
+        spriteBackArrow.setColor(sf::Color::Yellow);
+        // Phóng to 110% CỦA scale cơ sở
+        spriteBackArrow.setScale(backArrowBaseScale * 1.1f, backArrowBaseScale * 1.1f); 
+    } else {
+        spriteBackArrow.setColor(sf::Color::White);
+        // Trở về 100% CỦA scale cơ sở
+        spriteBackArrow.setScale(backArrowBaseScale, backArrowBaseScale); 
+    }
+}
+
+// Hàm render cho màn hình Settings
+void Game::renderSettings() {
+    window.setView(uiView);
+    
+    // Vẽ nền (có thể dùng lại nền của menu hoặc nền game over)
+    window.draw(menuBackgroundSprite); 
+
+    // Vẽ các UI của Settings
+    window.draw(spriteMusicButton);
+    window.draw(spriteBackArrow);
 }

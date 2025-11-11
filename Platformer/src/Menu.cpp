@@ -178,3 +178,6 @@ bool Menu::isPlayButtonClicked(const sf::Vector2f& mousePos) const {
 bool Menu::isExitButtonClicked(const sf::Vector2f& mousePos) const {
     return spriteExit.getGlobalBounds().contains(mousePos);
 }
+bool Menu::isSettingsButtonClicked(const sf::Vector2f& mousePos) const {
+    return spriteSettings.getGlobalBounds().contains(mousePos);
+}

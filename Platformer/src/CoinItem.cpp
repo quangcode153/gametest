@@ -1,7 +1,7 @@
 #include "CoinItem.hpp"
 #include <iostream>
 #include <cmath>
-
+#include "ResourceManager.hpp"
 CoinItem::CoinItem(float x, float y)
     : Item(x, y, "assets/items/Coin.png", 0.0f),
     bobbingTimer(0.f),
@@ -14,6 +14,7 @@ void CoinItem::onCollect(Player& player) {
     if (!collected) {
         player.addCoin(1);
         collected = true;
+        ResourceManager::getInstance().playSound("coin1sfx.wav");
         std::cout << "Coin collected! Player total coins: " << player.getTotalCoins() << std::endl;
     }
 }

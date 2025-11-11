@@ -8,7 +8,7 @@
 #include <fstream>
 #include <sstream>
 
-// Khai báo sớm
+
 class Player;
 class Platform;
 class Enemy;
@@ -19,13 +19,14 @@ class HeartItem;
 class SpeedBoostItem;
 class ShieldItem;
 
-// Đã thêm CHARACTER_SELECTION
+
 enum class GameState {
     MENU,
     PLAYING,
     GAME_OVER,
     WIN,
-    CHARACTER_SELECTION 
+    CHARACTER_SELECTION, 
+    SETTINGS
 };
 
 // Cấu trúc để lưu dữ liệu thẻ bài
@@ -79,18 +80,18 @@ private:
     int currentLevel;
     int maxLevels;
 
-    // Tài nguyên Game
+    
     sf::Texture backgroundTexture;
     sf::Sprite background;
     sf::Texture heartTexture;
     sf::Sprite heartSprite;
 
-    // Tài nguyên Menu
+    
     std::unique_ptr<Menu> menu;
     sf::Texture menuBackgroundTexture;
     sf::Sprite menuBackgroundSprite;
 
-    // Tài nguyên Game Over / Win
+    
     sf::Texture gameOverBackgroundTexture;
     sf::Sprite gameOverBackgroundSprite;
     sf::Text gameOverText;
@@ -98,13 +99,13 @@ private:
     sf::Text restartText;
     sf::Text menuText;
 
-    // Đối tượng game
+    
     std::unique_ptr<Player> player;
     std::vector<std::unique_ptr<Platform>> platforms;
     std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<std::unique_ptr<Item>> items;
 
-    // === BIẾN MỚI CHO CHỌN NHÂN VẬT ===
+    
     std::vector<CharacterData> characterList;
     int selectedCharacterIndex;
 
@@ -116,9 +117,16 @@ private:
     sf::Text charSelectTitle; 
     sf::Text charNameText;    
     sf::Text charSelectHelpText; 
-
-    // === HÀM MỚI CHO CHỌN NHÂN VẬT ===
+    sf::Texture texMusic;       
+    sf::Texture texMusicMuted;    
+    sf::Sprite spriteMusicButton; 
+    sf::Texture texBackArrow;       
+    sf::Sprite spriteBackArrow;
+   
     void updateCharacterSelection(float deltaTime);
     void renderCharacterSelection();
     void updateSelectorPosition(); 
+    void updateSettings(float deltaTime);
+    void renderSettings();
+    void updateMusicButtonTexture();
 };
