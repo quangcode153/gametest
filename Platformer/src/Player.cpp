@@ -393,3 +393,52 @@ bool Player::hasDeathAnimationFinished() const {
     }
     return false;
 }
+bool Player::isAttacking() const {
+    // Chỉ gây sát thương nếu animation đang chạy
+    if (animManager && !animManager->isFinished()) {
+        return (currentState == State::ATTACK1 || 
+                currentState == State::ATTACK2 || 
+                currentState == State::CASTING);
+    }
+    return false;
+}
+
+sf::FloatRect Player::getAttackHitbox() const {
+    // Tạo một hitbox "ảo" phía trước mặt player
+    sf::FloatRect playerHitbox = getHitbox(); // Lấy hitbox vật lý của player
+    sf::FloatRect attackBox;
+
+    float attackWidth = 60.f;  // Độ rộng của cú đánh (Kiếm Sĩ)
+    float attackHeight = playerHitbox.height; // Chiều cao bằng player
+    float attackOffsetY = playerHitbox.top;   // Vị trí Y bằng player
+
+    // === XỬ LÝ ĐÁNH XA CHO PHÁP SƯ ===
+    // Như bạn yêu cầu, Pháp Sư sẽ có tầm đánh xa hơn
+    if (currentAssetFolder.find("phep") != std::string::npos) {
+        attackWidth = 120.f; // Xa gấp đôi Kiếm Sĩ
+        // Bạn có thể chỉnh hitbox của Pháp Sư cao hơn một chút nếu muốn
+        // attackOffsetY = playerHitbox.top - 20.f; 
+        // attackHeight = playerHitbox.height + 40.f;
+    }
+    // ================================
+
+    if (facingRight) {
+        // Nếu quay phải, hitbox nằm bên phải player
+        attackBox = sf::FloatRect(
+            playerHitbox.left + playerHitbox.width, // Bắt đầu từ mép phải player
+            attackOffsetY,
+            attackWidth,
+            attackHeight
+        );
+    } else {
+        // Nếu quay trái, hitbox nằm bên trái player
+        attackBox = sf::FloatRect(
+            playerHitbox.left - attackWidth, // Bắt đầu từ mép trái player và đi ngược lại
+            attackOffsetY,
+            attackWidth,
+            attackHeight
+        );
+    }
+
+    return attackBox;
+} 

@@ -5,7 +5,12 @@ Enemy::Enemy() :
     velocity(0.f, 0.f),
     speed(100.f),
     movingRight(true),
-    alive(true)
+    // === SỬA (Khởi tạo máu) ===
+    health(100), // Ví dụ: Quái có 100 máu
+    maxHealth(100),
+    invulnerabilityTimer(0.f)
+    // alive(true) // Xóa dòng này
+    // ========================
 {
 }
 
@@ -13,6 +18,7 @@ Enemy::~Enemy() {
 }
 
 bool Enemy::loadTexture(const std::string& path) {
+    // ... (code loadTexture của bạn giữ nguyên, không cần sửa) ...
     sf::Image image;
     if (!image.loadFromFile(path)) {
         std::cerr << "Loi: Khong the tai file enemy: " << path << std::endl;
@@ -49,7 +55,15 @@ sf::FloatRect Enemy::getBounds() const {
 }
 
 void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms) {
-    if (!alive) return;
+    // === SỬA (Kiểm tra máu thay vì 'alive') ===
+    if (health <= 0) return;
+    // =======================================
+
+    // === THÊM (Đếm ngược thời gian bất tử) ===
+    if (invulnerabilityTimer > 0.f) {
+        invulnerabilityTimer -= deltaTime;
+    }
+    // ======================================
 
     velocity.y += 1000.f * deltaTime;
 
@@ -60,6 +74,7 @@ void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>
     sf::FloatRect enemyBounds = getBounds();
 
     for (const auto& platform : platforms) {
+        // ... (code xử lý va chạm platform giữ nguyên) ...
         sf::FloatRect platformBounds = platform->getBounds();
 
         if (enemyBounds.intersects(platformBounds)) {
@@ -78,6 +93,7 @@ void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>
 }
 
 void Enemy::patrol() {
+    // ... (code patrol của bạn giữ nguyên) ...
     if (movingRight) {
         velocity.x = speed;
     } else {
@@ -86,6 +102,7 @@ void Enemy::patrol() {
 }
 
 void Enemy::checkBounds(const std::vector<std::unique_ptr<Platform>>& platforms) {
+    // ... (code checkBounds của bạn giữ nguyên) ...
     sf::FloatRect enemyBounds = getBounds();
     sf::Vector2f currentPos = sprite.getPosition();
 
@@ -123,12 +140,47 @@ void Enemy::checkBounds(const std::vector<std::unique_ptr<Platform>>& platforms)
 
 
 void Enemy::kill() {
-    alive = false;
-    sprite.setPosition(-1000.f, -1000.f);
+    // === SỬA (Đặt máu về 0) ===
+    health = 0;
+    // alive = false; // Xóa dòng này
+    // ======================
+    sprite.setPosition(-1000.f, -1000.f); // Giữ lại cái này, nó rất hữu ích
 }
 
 void Enemy::draw(sf::RenderWindow& window) {
-    if (alive) {
+    // === SỬA (Kiểm tra máu) ===
+    if (health > 0) {
+        // === THÊM (Hiệu ứng nhấp nháy khi bị đánh) ===
+        if (invulnerabilityTimer > 0.f) {
+            // Cứ 0.1 giây lại ẩn/hiện
+            if (static_cast<int>(invulnerabilityTimer * 10) % 2 == 0) {
+                // Bỏ qua việc vẽ (tạo hiệu ứng nhấp nháy)
+                return; 
+            }
+        }
+        // ===========================================
         window.draw(sprite);
     }
+}
+
+// === THÊM CÁC HÀM MỚI VÀO CUỐI FILE ===
+
+void Enemy::takeDamage(int damage) {
+    if (health <= 0 || !canBeHit()) {
+        return; // Đã chết hoặc đang bất tử
+    }
+
+    health -= damage;
+    invulnerabilityTimer = 0.5f; // Quái bất tử trong 0.5 giây sau khi bị đánh
+    
+    std::cout << "Enemy bi danh! Mau con lai: " << health << std::endl;
+
+    if (health <= 0) {
+        kill(); // Quái chết
+    }
+}
+
+bool Enemy::canBeHit() const {
+    // Có thể bị đánh nếu timer <= 0
+    return invulnerabilityTimer <= 0.f;
 }

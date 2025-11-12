@@ -14,8 +14,13 @@ private:
     sf::Vector2f velocity;
     float speed;
     bool movingRight;
-    bool alive;
-    
+
+    // === SỬA (Thay thế bool alive) ===
+    int health;
+    int maxHealth;
+    float invulnerabilityTimer; // Giống như Player, để quái không bị dính 50 hit/giây
+    // ============================
+
 public:
     Enemy();
     ~Enemy();
@@ -25,15 +30,21 @@ public:
     
     sf::Vector2f getPosition() const;
     sf::FloatRect getBounds() const;
-    bool isAlive() const { return alive; }
+    
+    // === SỬA (Hàm isAlive bây giờ sẽ kiểm tra máu) ===
+    bool isAlive() const { return health > 0; }
+    // ============================================
     
     void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms);
     void patrol();
     
     void checkBounds(const std::vector<std::unique_ptr<Platform>>& platforms);
     
-    void kill();
+    void kill(); // Hàm này vẫn giữ, dùng khi bị dậm (nếu muốn) hoặc khi chết
     
+    // === THÊM CÁC HÀM CHIẾN ĐẤU MỚI ===
+    void takeDamage(int damage);
+    bool canBeHit() const;
     void draw(sf::RenderWindow& window);
 };
 

@@ -508,6 +508,7 @@ void Game::updatePlaying(float deltaTime) {
 
     for (auto& enemy : enemies) enemy->update(deltaTime, platforms);
 
+    // Vòng lặp xử lý Item (giữ nguyên)
     for (const auto& item : items) {
         if (!item->isCollected()) {
             item->update(deltaTime);
@@ -518,15 +519,19 @@ void Game::updatePlaying(float deltaTime) {
         }
     }
     auto removeIt = std::remove_if(items.begin(), items.end(),
-                                   [](const std::unique_ptr<Item>& i){ return i && i->isCollected(); });
+                                    [](const std::unique_ptr<Item>& i){ return i && i->isCollected(); });
     items.erase(removeIt, items.end());
 
+    // === BƯỚC 1: SỬA LẠI LOGIC VA CHẠM VẬT LÝ ===
+    // (Xóa bỏ cơ chế "dậm lên đầu")
     sf::FloatRect playerBounds = player->getHitbox();
     for (auto& enemy : enemies) {
         if (!enemy || !enemy->isAlive()) continue;
         sf::FloatRect enemyBounds = enemy->getBounds();
+
         if (playerBounds.intersects(enemyBounds)) {
-            float playerBottom = playerBounds.top + playerBounds.height;
+            // --- CODE CŨ BỊ XÓA ---
+            /* float playerBottom = playerBounds.top + playerBounds.height;
             float enemyTop = enemyBounds.top;
             float overlap = playerBottom - enemyTop;
             if (player->getVelocity().y > 0 && overlap < 25.f && enemyBounds.top > playerBounds.top) {
@@ -536,28 +541,57 @@ void Game::updatePlaying(float deltaTime) {
             else{
                 player->takeDamage();
             }
+            */
+            // --- THAY BẰNG CODE MỚI ---
+            // Bây giờ, bất kỳ va chạm vật lý nào, Player cũng bị sát thương
+            player->takeDamage();
         }
     }
+    // === KẾT THÚC BƯỚC 1 ===
 
+
+    // === BƯỚC 2: THÊM LOGIC TẤN CÔNG (ĐÁNH J/K) ===
+    // (Đây là khối code hoàn toàn mới)
+    if (player->isAttacking()) {
+        
+        sf::FloatRect playerAttackBox = player->getAttackHitbox();
+
+        // Duyệt qua tất cả kẻ thù
+        for (auto& enemy : enemies) {
+            
+            // Nếu kẻ thù còn sống, có thể bị đánh, và hitbox tấn công chạm vào
+            if (enemy && enemy->isAlive() && enemy->canBeHit() && playerAttackBox.intersects(enemy->getBounds())) {
+                
+                // Gây sát thương
+                enemy->takeDamage(50); // Ví dụ: 50 damage (quái có 100 máu sẽ chết sau 2 hit)
+                
+                // Không cần phát âm thanh ở đây, Player.cpp đã phát khi nhấn J/K
+            }
+        }
+    }
+    // === KẾT THÚC BƯỚC 2 ===
+
+
+    // Logic kiểm tra Player chết (giữ nguyên)
     if (player->hasDeathAnimationFinished()) {
-
         currentState = GameState::GAME_OVER;
-        ResourceManager::getInstance().stopMusic(); // <--- THÊM ĐỂ DỪNG NHẠC
+        ResourceManager::getInstance().stopMusic(); 
         ResourceManager::getInstance().playSound("diesfx.wav");
         std::cout << "--- Player DEATH animation finished! State -> GAME_OVER ---" << std::endl;
     }
     if (player->getPosition().y > window.getSize().y + 100.f) {
         if (currentState == GameState::PLAYING) {
             currentState = GameState::GAME_OVER;
-            ResourceManager::getInstance().stopMusic(); // <--- THÊM ĐỂ DỪNG NHẠC
+            ResourceManager::getInstance().stopMusic(); 
             ResourceManager::getInstance().playSound("diesfx.wav");
             std::cout << "--- Player fell off map! State -> GAME_OVER ---" << std::endl;
         }
     }
 
+    // Logic kiểm tra thắng/qua màn (giữ nguyên)
     if (currentState == GameState::PLAYING) {
         bool allEnemiesDead = std::all_of(enemies.begin(), enemies.end(),
-                                         [](const std::unique_ptr<Enemy>& e){ return e && !e->isAlive(); });
+                                        [](const std::unique_ptr<Enemy>& e){ return e && !e->isAlive(); });
 
         bool levelProgressCondition = allEnemiesDead;
 
@@ -565,7 +599,7 @@ void Game::updatePlaying(float deltaTime) {
             currentLevel++;
             if (currentLevel > maxLevels) {
                 currentState = GameState::WIN;
-                ResourceManager::getInstance().stopMusic(); // <--- THÊM ĐỂ DỪNG NHẠC
+                ResourceManager::getInstance().stopMusic(); 
                 ResourceManager::getInstance().playSound("winsfx.wav");
                 std::cout << "--- Player Wins! (All levels complete) ---" << std::endl;
             } else {
@@ -575,6 +609,7 @@ void Game::updatePlaying(float deltaTime) {
         }
     }
 
+    // Cập nhật Camera (giữ nguyên)
     sf::Vector2f playerPos = player->getPosition(); float cameraX = playerPos.x;
     if (cameraX < 600.f) cameraX = 600.f;
     if (cameraX > 2400.f - 600.f) cameraX = 2400.f - 600.f;
@@ -595,7 +630,7 @@ void Game::render() {
             break;
         case GameState::PLAYING:
             renderPlaying();
-            break;
+            break; 
         case GameState::GAME_OVER:
             renderGameOver();
             break;

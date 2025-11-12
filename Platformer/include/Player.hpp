@@ -66,7 +66,9 @@ public:
     void activateShield(float duration);
     bool getIsShielded() const { return isShielded; }
     float getShieldTimer() const { return shieldTimer; }
-    
+    bool isAttacking() const; // Kiểm tra xem Player có đang trong animation tấn công không
+    sf::FloatRect getAttackHitbox() const;
+
 private:
     std::unique_ptr<AnimationManager> animManager;
     sf::Sprite sprite;
