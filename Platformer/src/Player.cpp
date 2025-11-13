@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include "ResourceManager.hpp"
+
 Player::Player() :
     animManager(std::make_unique<AnimationManager>(sprite)),
     currentState(State::IDLE),
@@ -176,14 +177,14 @@ void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>
     bool animFinished = animManager->isFinished();
     State nextState = currentState;
 
-    if (currentState == State::ATTACK1 && !animFinished) { /* Giữ nguyên */ }
-    else if (currentState == State::ATTACK2 && !animFinished) { /* Giữ nguyên */ }
-    else if (currentState == State::CASTING && !animFinished) { /* Giữ nguyên */ }
-    else if (currentState == State::TAKE_HIT && !animFinished) { /* Giữ nguyên */ }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) && isOnGround) {
+    if (currentState == State::ATTACK1 && !animFinished) {  }
+    else if (currentState == State::ATTACK2 && !animFinished) {  }
+    else if (currentState == State::CASTING && !animFinished) {  }
+    else if (currentState == State::TAKE_HIT && !animFinished) {  }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) || sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         nextState = State::ATTACK1;
     }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K) && isOnGround) {
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
         if (currentAssetFolder.find("phep") != std::string::npos) {
             nextState = State::CASTING;
         } else {
@@ -242,9 +243,9 @@ void Player::setAnimation(State newState) {
             ResourceManager::getInstance().playSound("danhkiemsfx.wav");
             break;
         case State::CASTING:
-          animManager->play("CASTING", false);  
-          ResourceManager::getInstance().playSound("danhphepsfx.wav");
-          break;
+            animManager->play("CASTING", false);  
+            ResourceManager::getInstance().playSound("danhphepsfx.wav");
+            break;
         case State::TAKE_HIT: animManager->play("TAKE_HIT", false); break;
         case State::DEATH:    animManager->play("DEATH", false);   break;
     }
@@ -394,7 +395,7 @@ bool Player::hasDeathAnimationFinished() const {
     return false;
 }
 bool Player::isAttacking() const {
-    // Chỉ gây sát thương nếu animation đang chạy
+    
     if (animManager && !animManager->isFinished()) {
         return (currentState == State::ATTACK1 || 
                 currentState == State::ATTACK2 || 
@@ -404,36 +405,36 @@ bool Player::isAttacking() const {
 }
 
 sf::FloatRect Player::getAttackHitbox() const {
-    // Tạo một hitbox "ảo" phía trước mặt player
-    sf::FloatRect playerHitbox = getHitbox(); // Lấy hitbox vật lý của player
+    
+    sf::FloatRect playerHitbox = getHitbox(); 
     sf::FloatRect attackBox;
 
-    float attackWidth = 60.f;  // Độ rộng của cú đánh (Kiếm Sĩ)
-    float attackHeight = playerHitbox.height; // Chiều cao bằng player
-    float attackOffsetY = playerHitbox.top;   // Vị trí Y bằng player
+    float attackWidth = 60.f;  
+    float attackHeight = playerHitbox.height+30.f; 
+    float attackOffsetY = playerHitbox.top-30.f;   
 
-    // === XỬ LÝ ĐÁNH XA CHO PHÁP SƯ ===
-    // Như bạn yêu cầu, Pháp Sư sẽ có tầm đánh xa hơn
+    
+    
     if (currentAssetFolder.find("phep") != std::string::npos) {
-        attackWidth = 120.f; // Xa gấp đôi Kiếm Sĩ
-        // Bạn có thể chỉnh hitbox của Pháp Sư cao hơn một chút nếu muốn
-        // attackOffsetY = playerHitbox.top - 20.f; 
-        // attackHeight = playerHitbox.height + 40.f;
+        attackWidth = 120.f; 
+        
+        
+        
     }
-    // ================================
+    
 
     if (facingRight) {
-        // Nếu quay phải, hitbox nằm bên phải player
+        
         attackBox = sf::FloatRect(
-            playerHitbox.left + playerHitbox.width, // Bắt đầu từ mép phải player
+            playerHitbox.left + playerHitbox.width, 
             attackOffsetY,
             attackWidth,
             attackHeight
         );
     } else {
-        // Nếu quay trái, hitbox nằm bên trái player
+        
         attackBox = sf::FloatRect(
-            playerHitbox.left - attackWidth, // Bắt đầu từ mép trái player và đi ngược lại
+            playerHitbox.left - attackWidth, 
             attackOffsetY,
             attackWidth,
             attackHeight
@@ -441,4 +442,4 @@ sf::FloatRect Player::getAttackHitbox() const {
     }
 
     return attackBox;
-} 
+}

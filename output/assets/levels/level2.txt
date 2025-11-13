@@ -1,37 +1,33 @@
-# Day la man choi 2
-# Dinh dang: TYPE x y [width height] (width/height chi danh cho PLATFORM)
 
-# Vi tri khoi dau cua nguoi choi cho Level 2
-PLAYER 100 680
+PLAYER 50 600
 
-# Cac be do
-PLATFORM 0 740 500 60       # Nen dat ben trai
-PLATFORM 600 740 600 60     # Nen dat o giua
-PLATFORM 1300 740 1200 60   # Nen dat ben phai
+PLATFORM 0 700 250 600
 
-PLATFORM 200 600 150 30     # Be do nho dau tien
-PLATFORM 450 500 150 30     # Be do cao hon
-PLATFORM 700 400 200 30     # Be do tren cao
-PLATFORM 950 300 150 30     # Be do rat cao
-PLATFORM 1100 500 250 30    # Be do dai
-PLATFORM 1400 650 100 30    # Be do cuoi
-PLATFORM 1600 550 150 30    # Be do ben phai cao
+PLATFORM 400 600 150 30
+BAT 450 200       
 
-# Quai vat
-ENEMY 400 690               # Tren nen dat trai
-ENEMY 700 690               # Tren nen dat giua
-ENEMY 800 350               # Tren be do tren cao
-             # Tren be do dai
-ENEMY 1700 690              # Tren nen dat phai
 
-# Nam
-          # Tren be do ben phai cao
 
-# CÁC ĐỒNG COIN MỚI
-ITEM COIN 150 560
-ITEM COIN 500 460
-ITEM COIN 750 360
-ITEM COIN 1000 260
-ITEM COIN 1150 460
-ITEM COIN 1450 610
-ITEM COIN 1700 510
+PLATFORM 650 500 120 30
+BAT 700 100       
+
+PLATFORM 850 400 100 30
+ITEM COIN 870 350
+BAT 900 150       
+
+
+PLATFORM 1100 600 150 30
+BAT 1150 300     
+
+
+PLATFORM 1350 500 100 30
+BAT 1400 100       # Doi 5
+
+PLATFORM 1550 400 100 30
+BAT 1600 150       
+
+
+PLATFORM 1900 500 500 600
+SKELETON 2100 500
+ITEM SHIELD 2000 450
+ITEM HEART 2200 450

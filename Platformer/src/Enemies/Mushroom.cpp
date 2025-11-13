@@ -1,31 +1,35 @@
-#include "Enemies/Skeleton.hpp"
+#include "Enemies/Mushroom.hpp"
 #include "Player.hpp"
 #include <iostream>
 #include <cmath>
 
-Skeleton::Skeleton() : moveSpeed(200.f), visionRange(400.f), attackRange(60.f), attackCount(0) {
-    this->health = 100;
-    this->maxHealth = 100;
+
+Mushroom::Mushroom() : moveSpeed(40.f), visionRange(400.f), attackRange(60.f), attackCount(0), attackCooldown(0.f) {
+    this->health = 150;
+    this->maxHealth = 150;
 }
 
-Skeleton::~Skeleton() {}
+Mushroom::~Mushroom() {}
 
-void Skeleton::init(const std::string& folder) {
+void Mushroom::init(const std::string& folder) {
     animManager->clearAnimations();
     this->frameSize = sf::Vector2i(150, 150); 
 
-    this->hitboxOffsetTop = 50.f; 
+ 
+        this->hitboxOffsetTop = 50.f; 
     this->hitboxReduceWidth = 120.f;
-    this->hitboxReduceHeight = 100.f; 
+    this->hitboxReduceHeight = 150.f; 
     
-    this->hitboxOffsetLeft = 75.f; 
-    
+    this->hitboxOffsetLeft = 75.f;
+
+   
+
     animManager->addAnimation("IDLE", folder + "Idle.png", frameSize, 4, 0.15f);
-    animManager->addAnimation("WALK", folder + "Walk.png", frameSize, 4, 0.15f);
+    animManager->addAnimation("WALK", folder + "Run.png", frameSize, 8, 0.15f); // Dùng Run.png
 
     animManager->addAnimation("ATTACK_1", folder + "Attack1.png", frameSize, 8, 0.1f);
     animManager->addAnimation("ATTACK_2", folder + "Attack2.png", frameSize, 8, 0.1f);
-    animManager->addAnimation("ATTACK_3", folder + "Attack3.png", frameSize, 6, 0.1f);
+    animManager->addAnimation("ATTACK_3", folder + "Attack3.png", frameSize, 8, 0.1f);
     
     animManager->addAnimation("TAKE_HIT", folder + "Take Hit.png", frameSize, 4, 0.1f);
     animManager->addAnimation("DEATH", folder + "Death.png", frameSize, 4, 0.15f);
@@ -35,8 +39,9 @@ void Skeleton::init(const std::string& folder) {
     setAnimation(EnemyState::WALK);
 }
 
-void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) {
-    
+void Mushroom::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) {
+    if (attackCooldown > 0.f) attackCooldown -= deltaTime;
+
     if ((currentState == EnemyState::ATTACK || currentState == EnemyState::TAKE_HIT) && animManager->isFinished()) {
         currentState = EnemyState::IDLE; 
     }
@@ -61,10 +66,10 @@ void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platf
         }
     }
 
+   
     if (playerDetected && distanceToPlayer <= attackRange) {
         velocity.x = 0;
-        
-        if (currentState != EnemyState::ATTACK) {
+        if (currentState != EnemyState::ATTACK && attackCooldown <= 0.f) {
             attackCount++; 
             int attackVariant = attackCount % 3; 
 
@@ -73,6 +78,7 @@ void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platf
             else animManager->play("ATTACK_3", false);
 
             currentState = EnemyState::ATTACK; 
+            attackCooldown = 1.5f; 
         }
     }
     
@@ -91,7 +97,6 @@ void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platf
         } else {
             velocity.x = 0;
             setAnimation(EnemyState::IDLE);
-            
             if (directionToPlayer > 0) movingRight = true;
             else movingRight = false;
         }
@@ -99,7 +104,6 @@ void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platf
     
     else if (currentState != EnemyState::ATTACK) {
         float currentDir = movingRight ? 1.f : -1.f;
-        
         if (!checkPlatformEdge(platforms, currentDir)) {
             movingRight = !movingRight;
         }
@@ -118,10 +122,9 @@ void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platf
     else sprite.setScale(-scaleX, scaleY);
 }
 
-bool Skeleton::checkPlatformEdge(const std::vector<std::unique_ptr<Platform>>& platforms, float directionX) {
+bool Mushroom::checkPlatformEdge(const std::vector<std::unique_ptr<Platform>>& platforms, float directionX) {
     sf::FloatRect bounds = getBounds();
     sf::Vector2f feelerPoint;
-    
     feelerPoint.y = bounds.top + bounds.height + 10.f;
 
     if (directionX > 0) feelerPoint.x = bounds.left + bounds.width + 20.f;

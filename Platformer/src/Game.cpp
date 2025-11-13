@@ -19,6 +19,8 @@
 #include "ResourceManager.hpp"
 #include "Enemies/Skeleton.hpp"
 #include "Enemies/Bat.hpp"
+#include "Enemies/Goblin.hpp"
+#include "Enemies/Mushroom.hpp"
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
@@ -345,6 +347,26 @@ void Game::loadLevel(int levelNumber) {
             bat->init("assets/enemies/Bat/");
             bat->setPosition({x, y}); // Dơi không cần chỉnh offset chân vì nó bay
             enemies.push_back(std::move(bat));
+        }
+        else if (type == "GOBLIN") {
+            iss >> x >> y;
+            auto goblin = std::make_unique<Goblin>(); 
+            goblin->init("assets/enemies/Goblin/");
+            
+            // Goblin đi bộ nên cần chỉnh offset chân giống Skeleton
+            goblin->setPosition({x, y - 80.f}); 
+            
+            enemies.push_back(std::move(goblin));
+        }
+        else if (type == "MUSHROOM") {
+            iss >> x >> y;
+            auto goblin = std::make_unique<Goblin>(); 
+            goblin->init("assets/enemies/Mushroom/");
+            
+            // Goblin đi bộ nên cần chỉnh offset chân giống Skeleton
+            goblin->setPosition({x, y - 80.f}); 
+            
+            enemies.push_back(std::move(goblin));
         }
         else if (type == "ITEM") {
             std::string itemType;
