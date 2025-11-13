@@ -18,6 +18,7 @@
 #include "ResourceManager.hpp"
 #include "ResourceManager.hpp"
 #include "Enemies/Skeleton.hpp"
+#include "Enemies/Bat.hpp"
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
@@ -338,6 +339,13 @@ void Game::loadLevel(int levelNumber) {
             skeleton->setPosition({x, y-80.f});
             enemies.push_back(std::move(skeleton));
         }
+        else if (type == "BAT") {
+            iss >> x >> y;
+            auto bat = std::make_unique<Bat>();
+            bat->init("assets/enemies/Bat/");
+            bat->setPosition({x, y}); // Dơi không cần chỉnh offset chân vì nó bay
+            enemies.push_back(std::move(bat));
+        }
         else if (type == "ITEM") {
             std::string itemType;
             iss >> itemType >> x >> y;
@@ -628,35 +636,6 @@ void Game::renderPlaying() {
     for (const auto& item : items) item->draw(window);
     if(player) player->draw(window);
     
-    sf::RectangleShape debugBox;
-    debugBox.setFillColor(sf::Color::Transparent); 
-    debugBox.setOutlineColor(sf::Color::Red);      
-    debugBox.setOutlineThickness(1.f);
-
-    if (player) {
-        sf::FloatRect b = player->getHitbox();
-        debugBox.setSize(sf::Vector2f(b.width, b.height));
-        debugBox.setPosition(b.left, b.top);
-        window.draw(debugBox);
-        
-        if (player->isAttacking()) {
-            sf::FloatRect ab = player->getAttackHitbox();
-            sf::RectangleShape attackBox;
-            attackBox.setFillColor(sf::Color(255, 255, 0, 100)); 
-            attackBox.setSize(sf::Vector2f(ab.width, ab.height));
-            attackBox.setPosition(ab.left, ab.top);
-            window.draw(attackBox);
-        }
-    }
-
-    for (const auto& enemy : enemies) {
-        if (enemy->isAlive()) {
-            sf::FloatRect b = enemy->getBounds();
-            debugBox.setSize(sf::Vector2f(b.width, b.height));
-            debugBox.setPosition(b.left, b.top);
-            window.draw(debugBox);
-        }
-    }
     window.setView(uiView);
     float heartX = 10.f; float heartY = 10.f;
     float heartPadding = 70.f;

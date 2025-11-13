@@ -37,7 +37,7 @@ void Skeleton::init(const std::string& folder) {
 
 void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) {
     
-    if (currentState == EnemyState::ATTACK && animManager->isFinished()) {
+    if ((currentState == EnemyState::ATTACK || currentState == EnemyState::TAKE_HIT) && animManager->isFinished()) {
         currentState = EnemyState::IDLE; 
     }
 

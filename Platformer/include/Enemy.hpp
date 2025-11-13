@@ -51,4 +51,6 @@ protected:
     void applyGravity(float deltaTime);
     void checkPlatformCollisions(const std::vector<std::unique_ptr<Platform>>& platforms);
     void setAnimation(EnemyState newState);
+
+    bool gravityEnabled;
 };

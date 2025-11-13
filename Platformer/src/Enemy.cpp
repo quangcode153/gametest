@@ -11,7 +11,8 @@ Enemy::Enemy() :
     hitboxOffsetLeft(0.f), 
     hitboxOffsetTop(0.f), 
     hitboxReduceWidth(0.f), 
-    hitboxReduceHeight(0.f) 
+    hitboxReduceHeight(0.f),
+    gravityEnabled(true)
 {
     animManager = std::make_unique<AnimationManager>(sprite);
 }
@@ -49,8 +50,10 @@ void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>
 
     updateAI(deltaTime, platforms, player); 
 
-    applyGravity(deltaTime);
-    checkPlatformCollisions(platforms);
+    if (gravityEnabled) {
+        applyGravity(deltaTime);
+        checkPlatformCollisions(platforms);
+    }
     animManager->update(deltaTime);
 }
 
