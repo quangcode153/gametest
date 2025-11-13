@@ -1,51 +1,54 @@
-#ifndef ENEMY_HPP
-#define ENEMY_HPP
+#pragma once
 
 #include <SFML/Graphics.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
 #include "Platform.hpp"
+#include "AnimationManager.hpp"
+
+class Player;
+
+enum class EnemyState { IDLE, WALK, ATTACK, TAKE_HIT, DEATH };
 
 class Enemy {
-private:
-    sf::Texture texture;
-    sf::Sprite sprite;
-    
-    sf::Vector2f velocity;
-    float speed;
-    bool movingRight;
-
-    // === SỬA (Thay thế bool alive) ===
-    int health;
-    int maxHealth;
-    float invulnerabilityTimer; // Giống như Player, để quái không bị dính 50 hit/giây
-    // ============================
-
 public:
     Enemy();
-    ~Enemy();
+    virtual ~Enemy();
+
+    virtual void init(const std::string& assetFolder) = 0;
+    virtual void updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) = 0;
+
+    void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player);
+    void draw(sf::RenderWindow& window);
+    void takeDamage(int damage);
     
-    bool loadTexture(const std::string& path);
     void setPosition(const sf::Vector2f& pos);
-    
     sf::Vector2f getPosition() const;
+    
     sf::FloatRect getBounds() const;
     
-    // === SỬA (Hàm isAlive bây giờ sẽ kiểm tra máu) ===
     bool isAlive() const { return health > 0; }
-    // ============================================
-    
-    void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms);
-    void patrol();
-    
-    void checkBounds(const std::vector<std::unique_ptr<Platform>>& platforms);
-    
-    void kill(); // Hàm này vẫn giữ, dùng khi bị dậm (nếu muốn) hoặc khi chết
-    
-    // === THÊM CÁC HÀM CHIẾN ĐẤU MỚI ===
-    void takeDamage(int damage);
     bool canBeHit() const;
-    void draw(sf::RenderWindow& window);
-};
+    
+    bool isAttacking() const { return currentState == EnemyState::ATTACK; }
 
-#endif
+protected:
+    std::unique_ptr<AnimationManager> animManager;
+    sf::Sprite sprite;
+    sf::Vector2f velocity;
+    bool movingRight;
+    int health;
+    int maxHealth;
+    float invulnerabilityTimer;
+    EnemyState currentState;
+    sf::Vector2i frameSize;
+
+    float hitboxOffsetLeft;
+    float hitboxOffsetTop;
+    float hitboxReduceWidth;
+    float hitboxReduceHeight;
+
+    void applyGravity(float deltaTime);
+    void checkPlatformCollisions(const std::vector<std::unique_ptr<Platform>>& platforms);
+    void setAnimation(EnemyState newState);
+};

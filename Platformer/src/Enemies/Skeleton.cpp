@@ -1,0 +1,138 @@
+#include "Enemies/Skeleton.hpp"
+#include "Player.hpp"
+#include <iostream>
+#include <cmath>
+
+Skeleton::Skeleton() : moveSpeed(80.f), visionRange(400.f), attackRange(60.f), attackCount(0) {
+    this->health = 100;
+    this->maxHealth = 100;
+}
+
+Skeleton::~Skeleton() {}
+
+void Skeleton::init(const std::string& folder) {
+    animManager->clearAnimations();
+    this->frameSize = sf::Vector2i(150, 150); 
+
+    this->hitboxOffsetTop = 50.f; 
+    this->hitboxReduceWidth = 120.f;
+    this->hitboxReduceHeight = 100.f; 
+    
+    this->hitboxOffsetLeft = 75.f; 
+    
+    animManager->addAnimation("IDLE", folder + "Idle.png", frameSize, 4, 0.15f);
+    animManager->addAnimation("WALK", folder + "Walk.png", frameSize, 4, 0.15f);
+
+    animManager->addAnimation("ATTACK_1", folder + "Attack1.png", frameSize, 8, 0.1f);
+    animManager->addAnimation("ATTACK_2", folder + "Attack2.png", frameSize, 8, 0.1f);
+    animManager->addAnimation("ATTACK_3", folder + "Attack3.png", frameSize, 6, 0.1f);
+    
+    animManager->addAnimation("TAKE_HIT", folder + "Take Hit.png", frameSize, 4, 0.1f);
+    animManager->addAnimation("DEATH", folder + "Death.png", frameSize, 4, 0.15f);
+
+    sprite.setOrigin(frameSize.x / 2.f, frameSize.y / 2.f);
+    sprite.setScale(1.0f, 1.0f);
+    setAnimation(EnemyState::WALK);
+}
+
+void Skeleton::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) {
+    
+    if (currentState == EnemyState::ATTACK && animManager->isFinished()) {
+        currentState = EnemyState::IDLE; 
+    }
+
+    if (currentState == EnemyState::TAKE_HIT || currentState == EnemyState::DEATH) {
+        velocity.x = 0;
+        return;
+    }
+
+    float distanceToPlayer = 0.f;
+    float directionToPlayer = 0.f;
+    bool playerDetected = false;
+
+    if (player) {
+        float dx = player->getPosition().x - this->getPosition().x;
+        float dy = player->getPosition().y - this->getPosition().y;
+        distanceToPlayer = std::sqrt(dx*dx + dy*dy);
+        
+        if (distanceToPlayer < visionRange && std::abs(dy) < 50.f) { 
+            playerDetected = true;
+            directionToPlayer = (dx > 0) ? 1.f : -1.f;
+        }
+    }
+
+    if (playerDetected && distanceToPlayer <= attackRange) {
+        velocity.x = 0;
+        
+        if (currentState != EnemyState::ATTACK) {
+            attackCount++; 
+            int attackVariant = attackCount % 3; 
+
+            if (attackVariant == 0) animManager->play("ATTACK_1", false);
+            else if (attackVariant == 1) animManager->play("ATTACK_2", false);
+            else animManager->play("ATTACK_3", false);
+
+            currentState = EnemyState::ATTACK; 
+        }
+    }
+    
+    else if (playerDetected && currentState != EnemyState::ATTACK) {
+        bool safeToChase = checkPlatformEdge(platforms, directionToPlayer);
+
+        if (safeToChase) {
+            if (directionToPlayer > 0) {
+                velocity.x = moveSpeed;
+                movingRight = true;
+            } else {
+                velocity.x = -moveSpeed;
+                movingRight = false;
+            }
+            setAnimation(EnemyState::WALK);
+        } else {
+            velocity.x = 0;
+            setAnimation(EnemyState::IDLE);
+            
+            if (directionToPlayer > 0) movingRight = true;
+            else movingRight = false;
+        }
+    }
+    
+    else if (currentState != EnemyState::ATTACK) {
+        float currentDir = movingRight ? 1.f : -1.f;
+        
+        if (!checkPlatformEdge(platforms, currentDir)) {
+            movingRight = !movingRight;
+        }
+        
+        if (movingRight) velocity.x = moveSpeed;
+        else velocity.x = -moveSpeed;
+        
+        setAnimation(EnemyState::WALK);
+    }
+
+    sprite.move(velocity.x * deltaTime, 0.f);
+    
+    float scaleX = std::abs(sprite.getScale().x);
+    float scaleY = sprite.getScale().y;
+    if (movingRight) sprite.setScale(scaleX, scaleY);
+    else sprite.setScale(-scaleX, scaleY);
+}
+
+bool Skeleton::checkPlatformEdge(const std::vector<std::unique_ptr<Platform>>& platforms, float directionX) {
+    sf::FloatRect bounds = getBounds();
+    sf::Vector2f feelerPoint;
+    
+    feelerPoint.y = bounds.top + bounds.height + 10.f;
+
+    if (directionX > 0) feelerPoint.x = bounds.left + bounds.width + 20.f;
+    else feelerPoint.x = bounds.left - 20.f;
+
+    bool groundAhead = false;
+    for (const auto& platform : platforms) {
+        if (platform->getBounds().contains(feelerPoint)) {
+            groundAhead = true;
+            break;
+        }
+    }
+    return groundAhead;
+}

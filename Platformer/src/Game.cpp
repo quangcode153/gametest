@@ -17,7 +17,7 @@
 #include "ShieldItem.hpp"
 #include "ResourceManager.hpp"
 #include "ResourceManager.hpp"
-
+#include "Enemies/Skeleton.hpp"
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
@@ -51,20 +51,18 @@ void Game::initialize() {
 
     menu->initialize();
     std::cout << "Game initialized!\n";
-    spriteMusicButton.setTexture(texMusic); // Sẽ cập nhật lại sau
+    spriteMusicButton.setTexture(texMusic); 
     sf::FloatRect mbBounds = spriteMusicButton.getLocalBounds();
     spriteMusicButton.setOrigin(mbBounds.width / 2.f, mbBounds.height / 2.f);
     spriteMusicButton.setPosition(600.f, 350.f);
     spriteMusicButton.setScale(0.1f, 0.1f);
-    // Đặt đúng texture (Bật/Tắt) ngay từ đầu
     updateMusicButtonTexture(); 
 
-    // Thiết lập chữ "Quay Lại"
+    
     spriteBackArrow.setTexture(texBackArrow);
     sf::FloatRect arrowBounds = spriteBackArrow.getLocalBounds();
     spriteBackArrow.setOrigin(arrowBounds.width / 2.f, arrowBounds.height / 2.f);
-    spriteBackArrow.setScale(0.24f, 0.24f); // Điều chỉnh kích thước mũi tên nếu cần
-    // Đặt ở góc dưới bên trái, cách mép 50 pixel
+    spriteBackArrow.setScale(0.24f, 0.24f); 
     spriteBackArrow.setPosition(50.f + arrowBounds.width * spriteBackArrow.getScale().x / 2.f, 
                                 window.getSize().y - (50.f + arrowBounds.height * spriteBackArrow.getScale().y / 2.f));
 }
@@ -221,29 +219,25 @@ void Game::loadResources() {
         std::cerr << "!!! LOI: Khong tai duoc assets/button_music_muted.png\n";
     }
 
-    // === ĐỊNH NGHĨA CÁC NHÂN VẬT (ĐÃ SỬA LỖI WHITE BOX) ===
+    
     characterList.clear();
     float cardScale = 0.5f;
 
-    // --- BƯỚC 1: THÊM TẤT CẢ NHÂN VẬT VÀO VECTOR TRƯỚC ---
+    
 
-    // Nhân vật 1: Kiếm Sĩ
     CharacterData kiem;
     kiem.name = "Kiem Si";
     kiem.assetFolder = "assets/characters/kiem/";
-    characterList.push_back(kiem); // Thêm Kiem Si
+    characterList.push_back(kiem); 
 
-    // Nhân vật 2: Pháp Sư
     CharacterData phep;
     phep.name = "Phap Su";
     phep.assetFolder = "assets/characters/phep/";
-    characterList.push_back(phep); // Thêm Phap Su
+    characterList.push_back(phep); 
 
-    // (Thêm các nhân vật khác ở đây nếu có)
+   
 
-    // --- BƯỚC 2: BÂY GIỜ MỚI TẢI TEXTURE BẰNG INDEX (SAU KHI VECTOR ỔN ĐỊNH) ---
 
-    // Tải cho Kiếm Sĩ (index 0)
     if (characterList[0].previewTexture.loadFromFile("assets/characters/kiem/Preview.png")) {
         std::cout << "✓ Kiem Si Preview loaded: assets/characters/kiem/Preview.png\n";
         characterList[0].previewSprite.setTexture(characterList[0].previewTexture); 
@@ -254,7 +248,6 @@ void Game::loadResources() {
         std::cerr << "!!! LOI: Khong tai duoc assets/characters/kiem/Preview.png\n";
     }
 
-    // Tải cho Pháp Sư (index 1)
     if (characterList[1].previewTexture.loadFromFile("assets/characters/phep/Preview.png")) { 
         std::cout << "✓ Phap Su Preview loaded: assets/characters/phep/Preview.png\n";
         characterList[1].previewSprite.setTexture(characterList[1].previewTexture); 
@@ -265,7 +258,6 @@ void Game::loadResources() {
         std::cerr << "!!! LOI: Khong tai duoc assets/characters/phep/Preview.png\n";
     }
 
-    // Đặt nhân vật mặc định
     selectedCharacterIndex = 0;
     updateSelectorPosition();
 }
@@ -328,23 +320,23 @@ void Game::loadLevel(int levelNumber) {
             if (player) {
                 float footOffset = player->getScaledFootOffset();
                 player->setPosition({x, y - footOffset});
-                player->setTotalCoins(0);
-                player->heal(player->getMaxHealth());
+                
+                // player->heal(player->getMaxHealth()); <--- DÒNG NÀY ĐÃ BỊ XÓA/BỎ QUA
             }
         }
         else if (type == "PLATFORM") {
             iss >> x >> y >> w >> h;
             platforms.push_back(std::make_unique<Platform>(sf::Vector2f(x, y), sf::Vector2f(w, h), platformTexturePath));
         }
-        else if (type == "ENEMY") {
+        else if (type == "ENEMY" || type == "SKELETON") { 
             iss >> x >> y;
-            auto enemy = std::make_unique<Enemy>();
-            if (enemy->loadTexture(enemyTexturePath)) {
-                enemy->setPosition({x, y});
-                enemies.push_back(std::move(enemy));
-            } else {
-                std::cerr << "!!! LOI: Khong the tai enemy texture: " << enemyTexturePath << std::endl;
-            }
+            
+            auto skeleton = std::make_unique<Skeleton>(); 
+            
+            skeleton->init("assets/enemies/Skeleton/");
+            
+            skeleton->setPosition({x, y-80.f});
+            enemies.push_back(std::move(skeleton));
         }
         else if (type == "ITEM") {
             std::string itemType;
@@ -384,7 +376,7 @@ void Game::handleEvents() {
                         currentState = GameState::CHARACTER_SELECTION;
                     }
                     else if (menu->isSettingsButtonClicked(mousePos)) {
-                        currentState = GameState::SETTINGS; // Chuyển sang màn hình Cài Đặt
+                        currentState = GameState::SETTINGS; 
                     }
                     else if (menu->isExitButtonClicked(mousePos)) {
                         window.close();
@@ -392,12 +384,12 @@ void Game::handleEvents() {
                 }
                 else if (currentState == GameState::SETTINGS) {
                     if (spriteMusicButton.getGlobalBounds().contains(mousePos)) {
-                        // Nhấn vào nút Tắt/Mở nhạc
+                        
                         ResourceManager::getInstance().toggleMusicMute();
-                        updateMusicButtonTexture(); // Cập nhật hình ảnh nút
+                        updateMusicButtonTexture(); 
                     }
                     if (spriteBackArrow.getGlobalBounds().contains(mousePos)) {
-                        // Nhấn vào chữ "Quay Lại"
+                        
                         currentState = GameState::MENU;
                     }
                 }
@@ -460,7 +452,7 @@ void Game::handleEvents() {
                         currentState = GameState::CHARACTER_SELECTION;
                     }
                     else if (option == MenuOption::SETTINGS) {
-                        currentState = GameState::SETTINGS; // Chuyển sang màn hình Cài Đặt
+                        currentState = GameState::SETTINGS; 
                     }
                     else if (option == MenuOption::EXIT) window.close();
                 }
@@ -468,7 +460,7 @@ void Game::handleEvents() {
             }
              else if (currentState == GameState::SETTINGS) {
                 if (event.key.code == sf::Keyboard::Escape) {
-                    currentState = GameState::MENU; // Quay lại Menu
+                    currentState = GameState::MENU; 
                 }
             }
             else if (currentState == GameState::PLAYING) {
@@ -506,9 +498,8 @@ void Game::updatePlaying(float deltaTime) {
 
     player->update(deltaTime, platforms);
 
-    for (auto& enemy : enemies) enemy->update(deltaTime, platforms);
+    for (auto& enemy : enemies) enemy->update(deltaTime, platforms,player.get());
 
-    // Vòng lặp xử lý Item (giữ nguyên)
     for (const auto& item : items) {
         if (!item->isCollected()) {
             item->update(deltaTime);
@@ -522,57 +513,37 @@ void Game::updatePlaying(float deltaTime) {
                                     [](const std::unique_ptr<Item>& i){ return i && i->isCollected(); });
     items.erase(removeIt, items.end());
 
-    // === BƯỚC 1: SỬA LẠI LOGIC VA CHẠM VẬT LÝ ===
-    // (Xóa bỏ cơ chế "dậm lên đầu")
+    
     sf::FloatRect playerBounds = player->getHitbox();
     for (auto& enemy : enemies) {
         if (!enemy || !enemy->isAlive()) continue;
         sf::FloatRect enemyBounds = enemy->getBounds();
 
         if (playerBounds.intersects(enemyBounds)) {
-            // --- CODE CŨ BỊ XÓA ---
-            /* float playerBottom = playerBounds.top + playerBounds.height;
-            float enemyTop = enemyBounds.top;
-            float overlap = playerBottom - enemyTop;
-            if (player->getVelocity().y > 0 && overlap < 25.f && enemyBounds.top > playerBounds.top) {
-                enemy->kill();
-                ResourceManager::getInstance().playSound("enemydiesfx.wav");
-            }
-            else{
-                player->takeDamage();
-            }
-            */
-            // --- THAY BẰNG CODE MỚI ---
-            // Bây giờ, bất kỳ va chạm vật lý nào, Player cũng bị sát thương
+            
+            
             player->takeDamage();
         }
     }
-    // === KẾT THÚC BƯỚC 1 ===
+    
 
 
-    // === BƯỚC 2: THÊM LOGIC TẤN CÔNG (ĐÁNH J/K) ===
-    // (Đây là khối code hoàn toàn mới)
     if (player->isAttacking()) {
         
         sf::FloatRect playerAttackBox = player->getAttackHitbox();
 
-        // Duyệt qua tất cả kẻ thù
         for (auto& enemy : enemies) {
             
-            // Nếu kẻ thù còn sống, có thể bị đánh, và hitbox tấn công chạm vào
             if (enemy && enemy->isAlive() && enemy->canBeHit() && playerAttackBox.intersects(enemy->getBounds())) {
                 
-                // Gây sát thương
-                enemy->takeDamage(50); // Ví dụ: 50 damage (quái có 100 máu sẽ chết sau 2 hit)
+                enemy->takeDamage(50); 
                 
-                // Không cần phát âm thanh ở đây, Player.cpp đã phát khi nhấn J/K
             }
         }
     }
-    // === KẾT THÚC BƯỚC 2 ===
+    
 
 
-    // Logic kiểm tra Player chết (giữ nguyên)
     if (player->hasDeathAnimationFinished()) {
         currentState = GameState::GAME_OVER;
         ResourceManager::getInstance().stopMusic(); 
@@ -588,7 +559,6 @@ void Game::updatePlaying(float deltaTime) {
         }
     }
 
-    // Logic kiểm tra thắng/qua màn (giữ nguyên)
     if (currentState == GameState::PLAYING) {
         bool allEnemiesDead = std::all_of(enemies.begin(), enemies.end(),
                                         [](const std::unique_ptr<Enemy>& e){ return e && !e->isAlive(); });
@@ -609,7 +579,6 @@ void Game::updatePlaying(float deltaTime) {
         }
     }
 
-    // Cập nhật Camera (giữ nguyên)
     sf::Vector2f playerPos = player->getPosition(); float cameraX = playerPos.x;
     if (cameraX < 600.f) cameraX = 600.f;
     if (cameraX > 2400.f - 600.f) cameraX = 2400.f - 600.f;
@@ -658,7 +627,36 @@ void Game::renderPlaying() {
     for (const auto& enemy : enemies) enemy->draw(window);
     for (const auto& item : items) item->draw(window);
     if(player) player->draw(window);
+    
+    sf::RectangleShape debugBox;
+    debugBox.setFillColor(sf::Color::Transparent); 
+    debugBox.setOutlineColor(sf::Color::Red);      
+    debugBox.setOutlineThickness(1.f);
 
+    if (player) {
+        sf::FloatRect b = player->getHitbox();
+        debugBox.setSize(sf::Vector2f(b.width, b.height));
+        debugBox.setPosition(b.left, b.top);
+        window.draw(debugBox);
+        
+        if (player->isAttacking()) {
+            sf::FloatRect ab = player->getAttackHitbox();
+            sf::RectangleShape attackBox;
+            attackBox.setFillColor(sf::Color(255, 255, 0, 100)); 
+            attackBox.setSize(sf::Vector2f(ab.width, ab.height));
+            attackBox.setPosition(ab.left, ab.top);
+            window.draw(attackBox);
+        }
+    }
+
+    for (const auto& enemy : enemies) {
+        if (enemy->isAlive()) {
+            sf::FloatRect b = enemy->getBounds();
+            debugBox.setSize(sf::Vector2f(b.width, b.height));
+            debugBox.setPosition(b.left, b.top);
+            window.draw(debugBox);
+        }
+    }
     window.setView(uiView);
     float heartX = 10.f; float heartY = 10.f;
     float heartPadding = 70.f;
@@ -761,6 +759,10 @@ void Game::startGame() {
     std::cout << "Loading character from: " << selectedFolder << std::endl;
 
     player->loadTexture(selectedFolder);
+    if (player) {
+        player->heal(player->getMaxHealth()); 
+        player->setTotalCoins(0);
+    }
 
     currentLevel = 1;
     loadLevel(currentLevel);
@@ -770,14 +772,17 @@ void Game::startGame() {
 
 void Game::restartGame() {
     std::cout << "Restarting game...\n";
-
-    if (currentState == GameState::WIN) {
-        currentLevel = maxLevels;
+    if (currentState == GameState::GAME_OVER||currentState == GameState::WIN) {
+        currentLevel = 1; 
     }
 
     loadLevel(currentLevel);
     currentState = GameState::PLAYING;
     ResourceManager::getInstance().playMusic("musicgame.mp3");
+    if (player) {
+        player->heal(player->getMaxHealth()); 
+        player->setTotalCoins(0); 
+    }
 }
 
 
@@ -848,9 +853,7 @@ void Game::updateSelectorPosition() {
         charNameText.setPosition(selectorX, selectorY + 80.f);
     }
 }
-// === DÁN CÁC HÀM MỚI NÀY VÀO CUỐI FILE Game.cpp ===
 
-// Hàm này giúp cập nhật hình ảnh nút Bật/Tắt
 void Game::updateMusicButtonTexture() {
     if (ResourceManager::getInstance().isMusicMuted()) {
         spriteMusicButton.setTexture(texMusicMuted);
@@ -859,47 +862,35 @@ void Game::updateMusicButtonTexture() {
     }
 }
 
-// Hàm update cho màn hình Settings
 void Game::updateSettings(float deltaTime) {
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), uiView);
     
-    // Scale cơ sở bạn muốn cho nút loa (giống trong initialize)
     float musicButtonBaseScale = 0.1f; 
     
-    // Scale cơ sở cho nút quay lại (giống trong initialize)
     float backArrowBaseScale = 0.24f; 
 
-    // === HÀM updateSettings ĐÃ SỬA ===
     
-    // Xử lý hover cho nút loa
+    
     if (spriteMusicButton.getGlobalBounds().contains(mousePos)) {
-        // Phóng to 110% CỦA scale cơ sở
         spriteMusicButton.setScale(musicButtonBaseScale * 1.1f, musicButtonBaseScale * 1.1f); 
     } else {
-        // Trở về 100% CỦA scale cơ sở
         spriteMusicButton.setScale(musicButtonBaseScale, musicButtonBaseScale); 
     }
 
-    // Xử lý hover cho nút quay lại
     if (spriteBackArrow.getGlobalBounds().contains(mousePos)) {
         spriteBackArrow.setColor(sf::Color::Yellow);
-        // Phóng to 110% CỦA scale cơ sở
         spriteBackArrow.setScale(backArrowBaseScale * 1.1f, backArrowBaseScale * 1.1f); 
     } else {
         spriteBackArrow.setColor(sf::Color::White);
-        // Trở về 100% CỦA scale cơ sở
         spriteBackArrow.setScale(backArrowBaseScale, backArrowBaseScale); 
     }
 }
 
-// Hàm render cho màn hình Settings
 void Game::renderSettings() {
     window.setView(uiView);
     
-    // Vẽ nền (có thể dùng lại nền của menu hoặc nền game over)
     window.draw(menuBackgroundSprite); 
 
-    // Vẽ các UI của Settings
     window.draw(spriteMusicButton);
     window.draw(spriteBackArrow);
 }
