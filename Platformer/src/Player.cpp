@@ -132,6 +132,21 @@ void Player::jump() {
     }
 }
 
+// Thêm hàm này vào src/Player.cpp
+void Player::attack() {
+    // Chỉ cho phép đánh nếu không đang bận (đánh dở, bị thương...)
+    if ((currentState == State::ATTACK1 || currentState == State::ATTACK2 || currentState == State::CASTING) && !animManager->isFinished()) {
+        return;
+    }
+    if (currentState == State::TAKE_HIT && !animManager->isFinished()) {
+        return;
+    }
+
+    // Nếu không bận -> set trạng thái đánh
+    // (Logic chọn ATTACK1 hay ATTACK2 sẽ được xử lý trong update)
+    setAnimation(State::ATTACK1);
+}
+
 void Player::stopMoving() {
     velocity.x = 0.f;
 }
@@ -181,8 +196,8 @@ void Player::update(float deltaTime, const std::vector<std::unique_ptr<Platform>
     else if (currentState == State::ATTACK2 && !animFinished) {  }
     else if (currentState == State::CASTING && !animFinished) {  }
     else if (currentState == State::TAKE_HIT && !animFinished) {  }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) || sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-        nextState = State::ATTACK1;
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::J)) {
+       nextState = State::ATTACK1;
     }
     else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)) {
         if (currentAssetFolder.find("phep") != std::string::npos) {

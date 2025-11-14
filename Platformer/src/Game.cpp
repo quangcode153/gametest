@@ -423,6 +423,14 @@ void Game::handleEvents() {
                         currentState = GameState::MENU;
                     }
                 }
+                else if (currentState == GameState::PLAYING) {
+                    // (Sau này có thể thêm check click trúng nút Pause ở đây)
+                    
+                    // Nếu không click trúng UI -> là click để ĐÁNH
+                    if (player) {
+                        player->attack(); // Gọi hàm tấn công
+                    }
+                }
             }
         }
 
@@ -493,6 +501,7 @@ void Game::handleEvents() {
                     currentState = GameState::MENU; 
                 }
             }
+            
             else if (currentState == GameState::PLAYING) {
                 if (event.key.code == sf::Keyboard::Space) player->jump();
                 else if (event.key.code == sf::Keyboard::Escape) returnToMenu();

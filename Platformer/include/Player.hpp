@@ -33,6 +33,7 @@ public:
     void moveLeft();
     void moveRight();
     void jump();
+    void attack();
     void stopMoving();
 
     void setPosition(const sf::Vector2f& pos);
