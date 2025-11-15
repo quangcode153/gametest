@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 
-Skeleton::Skeleton() : moveSpeed(200.f), visionRange(400.f), attackRange(60.f), attackCount(0) {
+Skeleton::Skeleton() : moveSpeed(200.f), visionRange(400.f), attackRange(40.f), attackCount(0) {
     this->health = 100;
     this->maxHealth = 100;
 }

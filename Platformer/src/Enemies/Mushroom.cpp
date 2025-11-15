@@ -4,7 +4,7 @@
 #include <cmath>
 
 
-Mushroom::Mushroom() : moveSpeed(40.f), visionRange(400.f), attackRange(60.f), attackCount(0), attackCooldown(0.f) {
+Mushroom::Mushroom() : moveSpeed(100.f), visionRange(400.f), attackRange(40.f), attackCount(0), attackCooldown(0.f) {
     this->health = 150;
     this->maxHealth = 150;
 }
@@ -18,7 +18,7 @@ void Mushroom::init(const std::string& folder) {
  
         this->hitboxOffsetTop = 50.f; 
     this->hitboxReduceWidth = 120.f;
-    this->hitboxReduceHeight = 150.f; 
+    this->hitboxReduceHeight = 100.f; 
     
     this->hitboxOffsetLeft = 75.f;
 

@@ -360,13 +360,13 @@ void Game::loadLevel(int levelNumber) {
         }
         else if (type == "MUSHROOM") {
             iss >> x >> y;
-            auto goblin = std::make_unique<Goblin>(); 
-            goblin->init("assets/enemies/Mushroom/");
+            auto mushroom = std::make_unique<Mushroom>(); 
+            mushroom->init("assets/enemies/Mushroom/");
             
-            // Goblin đi bộ nên cần chỉnh offset chân giống Skeleton
-            goblin->setPosition({x, y - 80.f}); 
+            // Mushroom đi bộ nên cần chỉnh offset chân giống Skeleton
+            mushroom->setPosition({x, y - 80.f}); 
             
-            enemies.push_back(std::move(goblin));
+            enemies.push_back(std::move(mushroom));
         }
         else if (type == "ITEM") {
             std::string itemType;

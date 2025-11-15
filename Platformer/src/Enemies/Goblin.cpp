@@ -4,7 +4,7 @@
 #include <cmath>
 
 
-Goblin::Goblin() : moveSpeed(130.f), visionRange(600.f), attackRange(50.f), attackCount(0), attackCooldown(0.f) {
+Goblin::Goblin() : moveSpeed(130.f), visionRange(600.f), attackRange(40.f), attackCount(0), attackCooldown(0.f) {
     this->health = 100;
     this->maxHealth = 100;
 }

@@ -425,8 +425,8 @@ sf::FloatRect Player::getAttackHitbox() const {
     sf::FloatRect attackBox;
 
     float attackWidth = 60.f;  
-    float attackHeight = playerHitbox.height+30.f; 
-    float attackOffsetY = playerHitbox.top-30.f;   
+    float attackHeight = playerHitbox.height; 
+    float attackOffsetY = playerHitbox.top;   
 
     
     
