@@ -88,3 +88,6 @@ void AnimationManager::clearAnimations() {
     timer = 0.f;
     sprite.setTexture(sf::Texture()); // Xóa texture của sprite
 }
+int AnimationManager::getCurrentFrameIndex() const {
+    return currentFrame;
+}

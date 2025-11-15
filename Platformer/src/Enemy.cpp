@@ -48,12 +48,13 @@ void Enemy::update(float deltaTime, const std::vector<std::unique_ptr<Platform>>
         return;
     }
 
-    updateAI(deltaTime, platforms, player); 
+    
 
     if (gravityEnabled) {
         applyGravity(deltaTime);
         checkPlatformCollisions(platforms);
     }
+    updateAI(deltaTime, platforms, player); 
     animManager->update(deltaTime);
 }
 

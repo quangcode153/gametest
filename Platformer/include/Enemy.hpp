@@ -20,7 +20,7 @@ public:
 
     void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player);
     virtual void draw(sf::RenderWindow& window);
-    void takeDamage(int damage);
+    virtual void takeDamage(int damage);
     
     void setPosition(const sf::Vector2f& pos);
     sf::Vector2f getPosition() const;

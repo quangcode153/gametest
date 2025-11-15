@@ -21,8 +21,8 @@ private:
     
     // [FIX] Thêm biến tốc độ di chuyển
     float moveSpeed;
-    
-    sf::FloatRect attackHitbox;
+    void takeDamage(int damage) override;
+    sf::FloatRect calculateAttackHitbox() const;
     sf::FloatRect getBounds() const override;
     void facePlayer(Player* player);
     bool checkPlatformEdge(const std::vector<std::unique_ptr<Platform>>& platforms, float directionX);

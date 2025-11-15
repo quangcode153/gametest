@@ -37,7 +37,7 @@ public:
 
     // <-- THÊM HÀM NÀY ĐỂ SỬA LỖI MODEL
     void clearAnimations(); 
-
+    int getCurrentFrameIndex() const;
 private:
     sf::Sprite& sprite;
     std::map<std::string, Animation> animations;

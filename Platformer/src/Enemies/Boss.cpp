@@ -2,16 +2,17 @@
 #include <iostream>
 #include <cmath>
 #include <SFML/Graphics/RectangleShape.hpp>
+
 Boss::Boss() : attackCount(0), attackCooldown(0.f), hasDealtDamage(false) {
-    this->health = 500;
-    this->maxHealth = 500;
+    this->health = 1000;
+    this->maxHealth = 1000;
     this->visionRange = 1000.f;
     
-    // [FIX] Tinh chỉnh "Hit-and-Run"
-    this->attackRange = 250.f; // Giảm tầm đánh để player áp sát
+    // [FIX 1] Tăng tầm đánh để dễ hit hơn
+    this->attackRange = 300.f; // Tăng từ 250 lên 350
     
     this->moveSpeed = 100.f; 
-    this->gravityEnabled = true; // Boss đi bộ
+    this->gravityEnabled = true;
 }
 
 Boss::~Boss() {}
@@ -20,14 +21,11 @@ void Boss::init(const std::string& folder) {
     animManager->clearAnimations();
     this->frameSize = sf::Vector2i(250, 250);
 
-    // [FIX] Hitbox THÂN THỂ (Vulnerable) - Nhỏ và căn giữa
+    // Hitbox THÂN THỂ - giữ nguyên
     this->hitboxReduceWidth = 450.f;  
     this->hitboxReduceHeight = 450.f; 
-    
-    // Vì hàm getBounds MỚI (tính từ tâm) đã tự căn giữa,
-    // chúng ta PHẢI set offset về 0
-    this->hitboxOffsetTop = 0.f;       
-    this->hitboxOffsetLeft = 0.f;     
+    this->hitboxOffsetTop = 0.f;
+    this->hitboxOffsetLeft = 0.f;
 
     std::string spriteFolder = folder + "/Sprites/";
 
@@ -46,7 +44,6 @@ void Boss::init(const std::string& folder) {
 
 void Boss::facePlayer(Player* player) {
     if (!player) return;
-    // Không cho phép đổi hướng khi đang tấn công
     if (currentState == EnemyState::ATTACK) return; 
 
     if (player->getPosition().x < this->getPosition().x) {
@@ -61,25 +58,21 @@ void Boss::facePlayer(Player* player) {
     else sprite.setScale(-scaleX, scaleY);
 }
 
-// TRONG FILE Boss.cpp
-// (Xóa hàm updateAI cũ và thay bằng hàm này)
-
 void Boss::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) {
     // 1. Giảm hồi chiêu
     if (attackCooldown > 0.f) attackCooldown -= deltaTime;
 
-    // 2. Reset TRẠNG THÁI (chỉ khi hồi chiêu xong)
-    if (currentState == EnemyState::ATTACK && attackCooldown <= 0.f) {
-        currentState = EnemyState::IDLE;
+    // 2. [SỬA LỖI] Reset trạng thái VÀ animation sau khi đánh xong
+    if (currentState == EnemyState::ATTACK && animManager->isFinished()) {
+        // currentState = EnemyState::IDLE; // <-- Lỗi
+        setAnimation(EnemyState::IDLE); // <-- Sửa: Hàm này sẽ tự đổi state VÀ chạy anim "IDLE"
     }
-    
-    bool animFinished = animManager->isFinished();
 
     // 3. Bị đánh / Chết
     if (currentState == EnemyState::TAKE_HIT || currentState == EnemyState::DEATH) {
         velocity.x = 0;
         sprite.move(velocity.x * deltaTime, 0.f);
-        if (animFinished) currentState = EnemyState::IDLE; 
+        if (animManager->isFinished()) currentState = EnemyState::IDLE; 
         return;
     }
 
@@ -92,73 +85,51 @@ void Boss::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>
         float dx = player->getPosition().x - this->getPosition().x;
         float dy = player->getPosition().y - this->getPosition().y;
         
-        // [FIX LỖI RƯỢT ĐUỔI]
-        // Thêm `std::abs(dy)` để Boss chỉ phát hiện Player
-        // khi họ ở gần (không quá 300px trên/dưới)
         if (std::abs(dx) < visionRange && std::abs(dy) < 300.f) { 
             playerDetected = true;
             directionToPlayer = (dx > 0) ? 1.f : -1.f;
-            // Vẫn tính distanceToPlayer để check Tầm Đánh
             distanceToPlayer = std::sqrt(dx*dx + dy*dy); 
         } else {
             playerDetected = false;
-            distanceToPlayer = 9999.f; // Đặt xa vô tận
+            distanceToPlayer = 9999.f; 
         }
     }
 
-    // 5. Logic FSM (Máy trạng thái)
-    
-    // [ƯU TIÊN 1] - LOGIC KHI ĐANG TẤN CÔNG (Bao gồm cả đang hồi chiêu)
+    // ============================================================
+    // LOGIC FSM (MÁY TRẠNG THÁI)
+    // ============================================================
+
+    // [ƯU TIÊN 1] - ĐANG TẤN CÔNG (Animation đang chạy)
     if (currentState == EnemyState::ATTACK) {
-        velocity.x = 0; // Luôn đứng im
+        velocity.x = 0; 
 
-        if (animFinished) {
-            setAnimation(EnemyState::IDLE); // Chạy anim đứng im
-        }
-
-        // --- Tạo Hitbox Tấn Công (Giữ nguyên) ---
-        sf::FloatRect bodyBounds = this->getBounds(); 
-
-        // 2. Định nghĩa kích thước Hộp Vàng
-        float hitboxW = 300.f; 
-        float hitboxH = 200.f; 
-        float hitboxX, hitboxY;
-
-        // 3. Căn Hộp Vàng theo chiều dọc (Tâm Hộp Vàng = Tâm Hộp Đỏ)
-        hitboxY = bodyBounds.top + (bodyBounds.height / 2.f) - (hitboxH / 2.f);
-
-        // 4. Đặt Hộp Vàng ở TRƯỚC MẶT Hộp Đỏ
-        if (movingRight) {
-            // Đặt Hộp Vàng ngay cạnh phải của Hộp Đỏ
-            hitboxX = bodyBounds.left + bodyBounds.width; 
-        } else {
-            // Đặt Hộp Vàng ngay cạnh trái của Hộp Đỏ
-            // (Phải trừ đi chiều rộng của Hộp Vàng)
-            hitboxX = bodyBounds.left - hitboxW; 
-        }
+        // Lấy frame index hiện tại từ AnimationManager
+        int currentFrame = animManager->getCurrentFrameIndex();
         
-        attackHitbox = sf::FloatRect(hitboxX, hitboxY, hitboxW, hitboxH);
+        // Chỉ gây sát thương ở frame 3-5 (giữa animation)
+        bool inDamageWindow = (currentFrame >= 3 && currentFrame <= 5);
         
-        // --- [FIX LỖI KHÔNG GÂY SÁT THƯƠNG] ---
-        //
-        // Thời gian vung tay (Tell) là 1.2s
-        // (Tổng hồi chiêu 3.5s - Mốc 2.3s = 1.2s)
-        // 
-        // Logic mới:
-        // 1. Cửa sổ sát thương CHỈ TỒN TẠI khi `attackCooldown <= 2.3f`
-        // 2. Nếu Player ở trong, và `hasDealtDamage` là false -> Gây sát thương.
-        //
-        if (attackCooldown <= 2.3f) { 
-            // Nếu Player đang ở trong Hộp Vàng VÀ chưa bị đánh
-            if (player->getHitbox().intersects(attackHitbox) && !hasDealtDamage) {
-                player->takeDamage();
-                std::cout << "Boss HIT Player (Synced & 1 Hit)!" << std::endl;
-                hasDealtDamage = true; // Đánh dấu đã gây sát thương
+        if (inDamageWindow && !hasDealtDamage && player) {
+            sf::FloatRect attackHitbox = this->calculateAttackHitbox();
+            sf::FloatRect playerBox = player->getHitbox();
+            
+            if (attackHitbox.intersects(playerBox)) {
+                if (!player->isInvulnerable()) {
+                    player->takeDamage();
+                    std::cout << "========================================" << std::endl;
+                    std::cout << "🗡️  BOSS HIT PLAYER! (Frame " << currentFrame << ")" << std::endl;
+                    std::cout << "========================================" << std::endl;
+                    hasDealtDamage = true; // Đảm bảo chỉ hit 1 lần
+                } else {
+                    std::cout << "[Boss] Player is invulnerable/shielded - no damage" << std::endl;
+                }
             }
         }
+        
+        // [XÓA] Đã dời logic setAnimation(IDLE) lên đầu hàm
     }
-    // [ƯU TIÊN 2] - BẮT ĐẦU 1 ĐÒN ĐÁNH MỚI
-    else if (playerDetected && distanceToPlayer <= attackRange) { 
+    // [ƯU TIÊN 2] - BẮT ĐẦU ĐÒN ĐÁNH MỚI
+    else if (playerDetected && distanceToPlayer <= attackRange && attackCooldown <= 0.f) { 
         velocity.x = 0;
         facePlayer(player);
         
@@ -168,12 +139,11 @@ void Boss::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>
         else animManager->play("ATTACK_2", false);
         
         currentState = EnemyState::ATTACK; 
-        attackCooldown = 3.5f; // Tổng hồi chiêu
-        hasDealtDamage = false; // Reset cờ sát thương RẤT QUAN TRỌNG
+        attackCooldown = 3.0f;
+        hasDealtDamage = false; // Reset flag
     } 
-    // [ƯU TIÊN 3] - RƯỢT ĐUỔI
-    // (Bây giờ đã hoạt động vì Hitbox Thân Thể đã được sửa)
-    else if (playerDetected) {
+    // [ƯU TIÊN 3] - RƯỢT ĐUỔI (Chỉ khi không đang hồi chiêu)
+    else if (playerDetected && attackCooldown <= 0.f) {
         bool safeToChase = checkPlatformEdge(platforms, directionToPlayer);
         if (safeToChase) {
             velocity.x = (directionToPlayer > 0) ? moveSpeed : -moveSpeed;
@@ -185,16 +155,19 @@ void Boss::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>
             movingRight = (directionToPlayer > 0);
         }
     }
-    // [ƯU TIÊN 4] - TUẦN TRA
-    // (Bây giờ đã hoạt động vì Hitbox Thân Thể đã được sửa)
-    else {
+    // [ƯU TIÊN 4] - TUẦN TRA (Chỉ khi không đang hồi chiêu)
+    else if (attackCooldown <= 0.f) {
         float currentDir = movingRight ? 1.f : -1.f;
         if (!checkPlatformEdge(platforms, currentDir)) {
-            movingRight = !movingRight; // Quay đầu
+            movingRight = !movingRight;
         }
         velocity.x = movingRight ? moveSpeed : -moveSpeed;
         setAnimation(EnemyState::WALK);
     }
+    // [ƯU TIÊN 5] - ĐANG HỒI CHIÊU (attackCooldown > 0)
+    // Nếu không rơi vào các trường hợp trên (ví dụ currentState là IDLE)
+    // thì không làm gì cả, cứ để anim "IDLE" tiếp tục chạy.
+    // Đây chính là logic "đứng chờ" mà bạn muốn.
 
     // 6. Cập nhật di chuyển X
     sprite.move(velocity.x * deltaTime, 0.f);
@@ -206,9 +179,6 @@ void Boss::updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>
     else sprite.setScale(-scaleX, scaleY);
 }
 
-//
-// Hàm kiểm tra vách núi (Giữ nguyên)
-//
 bool Boss::checkPlatformEdge(const std::vector<std::unique_ptr<Platform>>& platforms, float directionX) {
     sf::FloatRect bounds = getBounds();
     sf::Vector2f feelerPoint;
@@ -226,13 +196,13 @@ bool Boss::checkPlatformEdge(const std::vector<std::unique_ptr<Platform>>& platf
     }
     return groundAhead;
 }
+
 void Boss::draw(sf::RenderWindow& window) {
-    // 1. Vẽ sprite của Boss (gọi hàm draw của lớp cha)
     Enemy::draw(window);
 
-    // --- Vẽ Hitbox THÂN THỂ (Màu đỏ) ---
+    // Vẽ Hitbox THÂN THỂ (Màu đỏ)
     sf::RectangleShape bodyHitbox;
-    sf::FloatRect bounds = this->getBounds(); // Lấy hitbox thân thể
+    sf::FloatRect bounds = this->getBounds();
     bodyHitbox.setSize(sf::Vector2f(bounds.width, bounds.height));
     bodyHitbox.setPosition(bounds.left, bounds.top);
     bodyHitbox.setFillColor(sf::Color::Transparent);
@@ -240,40 +210,72 @@ void Boss::draw(sf::RenderWindow& window) {
     bodyHitbox.setOutlineThickness(2.f);
     window.draw(bodyHitbox);
 
-    // --- Vẽ Hitbox TẤN CÔNG (Màu vàng, chỉ khi đang đánh) ---
+    // Vẽ Hitbox TẤN CÔNG (Màu vàng)
     if (currentState == EnemyState::ATTACK) {
         sf::RectangleShape attackBoxDebug;
+        sf::FloatRect currentAttackHitbox = this->calculateAttackHitbox();
         
-        // 'attackHitbox' được tạo và cập nhật trong updateAI
-        attackBoxDebug.setSize(sf::Vector2f(attackHitbox.width, attackHitbox.height));
-        attackBoxDebug.setPosition(attackHitbox.left, attackHitbox.top);
+        attackBoxDebug.setSize(sf::Vector2f(currentAttackHitbox.width, currentAttackHitbox.height));
+        attackBoxDebug.setPosition(currentAttackHitbox.left, currentAttackHitbox.top);
         
-        // Tô màu vàng trong suốt để dễ nhìn
-        attackBoxDebug.setFillColor(sf::Color(255, 255, 0, 50)); 
-        attackBoxDebug.setOutlineColor(sf::Color::Yellow); 
-        attackBoxDebug.setOutlineThickness(1.f);
+        // [FIX 4] Thay đổi màu theo frame để debug
+        int currentFrame = animManager->getCurrentFrameIndex();
+        if (currentFrame >= 3 && currentFrame <= 5) {
+            // Frame damage: Màu đỏ sáng
+            attackBoxDebug.setFillColor(sf::Color(255, 0, 0, 100));
+            attackBoxDebug.setOutlineColor(sf::Color::Red);
+        } else {
+            // Frame khác: Màu vàng mờ
+            attackBoxDebug.setFillColor(sf::Color(255, 255, 0, 50));
+            attackBoxDebug.setOutlineColor(sf::Color::Yellow);
+        }
+        attackBoxDebug.setOutlineThickness(2.f);
         
         window.draw(attackBoxDebug);
     }
 }
-// DÁN TOÀN BỘ HÀM NÀY VÀO CUỐI FILE Boss.cpp
 
-sf::FloatRect Boss::getBounds() const { 
-    // Kích thước thật của sprite (đã scale)
-    float spriteW = sprite.getLocalBounds().width * std::abs(sprite.getScale().x);
-    float spriteH = sprite.getLocalBounds().height * std::abs(sprite.getScale().y);
+sf::FloatRect Boss::getBounds() const {
+    sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+    float newWidth = spriteBounds.width - hitboxReduceWidth;
+    float newHeight = spriteBounds.height - hitboxReduceHeight;
+    float newLeft = (spriteBounds.left + spriteBounds.width / 2.f) - (newWidth / 2.f);
+    float newTop = (spriteBounds.top + spriteBounds.height / 2.f) - (newHeight / 2.f);
+    return sf::FloatRect(newLeft, newTop, newWidth, newHeight);
+}
 
-    // Kích thước của Hitbox (Hộp Đỏ) sau khi đã thu nhỏ
-    float hitboxW = spriteW - hitboxReduceWidth;
-    float hitboxH = spriteH - hitboxReduceHeight;
+// [FIX 5] Tăng kích thước hitbox tấn công
+sf::FloatRect Boss::calculateAttackHitbox() const {
+    float hitboxW = 200.f; // Tăng từ 300 lên 350
+    float hitboxH = 150.f; // Tăng từ 200 lên 250
+    float hitboxX, hitboxY;
 
-    // Vị trí TÂM của sprite (getPosition() là tâm)
-    sf::Vector2f centerPos = sprite.getPosition();
+    hitboxY = getPosition().y - (hitboxH / 2.f); 
+    
+    if (movingRight) {
+        hitboxX = getPosition().x + 30.f; // Giảm offset từ 50 xuống 30
+    } else {
+        hitboxX = getPosition().x - hitboxW - 30.f;
+    }
+    
+    return sf::FloatRect(hitboxX, hitboxY, hitboxW, hitboxH);
+}
+// Thêm hàm này vào cuối file Boss.cpp
 
-    // Tính toán góc trên-trái (top-left) của Hộp Đỏ
-    // Bằng cách lấy Tâm trừ đi một nửa kích thước, SAU ĐÓ áp dụng offset
-    float left = (centerPos.x - hitboxW / 2.f) + hitboxOffsetLeft;
-    float top = (centerPos.y - hitboxH / 2.f) + hitboxOffsetTop;
+void Boss::takeDamage(int damage) {
+    // 1. Kiểm tra các điều kiện như cũ
+    if (health <= 0 || !canBeHit()) return;
 
-    return sf::FloatRect(left, top, hitboxW, hitboxH);
+    // 2. Trừ máu và bật bất tử
+    health -= damage;
+    invulnerabilityTimer = 0.4f; // Vẫn giữ invulnerability để Boss chớp chớp
+
+    // 3. [ĐÃ XÓA]
+    // setAnimation(EnemyState::TAKE_HIT); // <-- ĐÂY LÀ DÒNG GÂY "STUN" (ĐÃ XÓA)
+
+    // 4. Kiểm tra nếu chết thì vẫn gọi animation CHẾT
+    if (health <= 0) {
+        health = 0;
+        setAnimation(EnemyState::DEATH); // Quan trọng: Boss vẫn phải chết
+    }
 }
