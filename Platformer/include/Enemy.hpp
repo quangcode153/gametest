@@ -19,13 +19,13 @@ public:
     virtual void updateAI(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player) = 0;
 
     void update(float deltaTime, const std::vector<std::unique_ptr<Platform>>& platforms, Player* player);
-    void draw(sf::RenderWindow& window);
+    virtual void draw(sf::RenderWindow& window);
     void takeDamage(int damage);
     
     void setPosition(const sf::Vector2f& pos);
     sf::Vector2f getPosition() const;
     
-    sf::FloatRect getBounds() const;
+    virtual sf::FloatRect getBounds() const;
     
     bool isAlive() const { return health > 0; }
     bool canBeHit() const;

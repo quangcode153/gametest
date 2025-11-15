@@ -21,6 +21,7 @@
 #include "Enemies/Bat.hpp"
 #include "Enemies/Goblin.hpp"
 #include "Enemies/Mushroom.hpp"
+#include "Boss.hpp"
 Game::Game() :
     totalTime(0.f),
     currentState(GameState::MENU),
@@ -331,6 +332,19 @@ void Game::loadLevel(int levelNumber) {
             iss >> x >> y >> w >> h;
             platforms.push_back(std::make_unique<Platform>(sf::Vector2f(x, y), sf::Vector2f(w, h), platformTexturePath));
         }
+        else if (type == "BOSS") { 
+          iss >> x >> y;
+          auto boss = std::make_unique<Boss>(); 
+          
+          // Đảm bảo đường dẫn này đúng với nơi bạn lưu file của Boss
+          boss->init("assets/Evil Wizard 2/"); 
+          
+          // Boss đã tắt trọng lực (gravityEnabled = false)
+          // nên ta set đúng vị trí (x, y) luôn, không cần trừ offset
+          boss->setPosition({x, y}); 
+          
+          enemies.push_back(std::move(boss));
+      }
         else if (type == "ENEMY" || type == "SKELETON") { 
             iss >> x >> y;
             
@@ -556,12 +570,16 @@ void Game::updatePlaying(float deltaTime) {
     sf::FloatRect playerBounds = player->getHitbox();
     for (auto& enemy : enemies) {
         if (!enemy || !enemy->isAlive()) continue;
-        sf::FloatRect enemyBounds = enemy->getBounds();
 
-        if (playerBounds.intersects(enemyBounds)) {
-            
-            
-            player->takeDamage();
+        Boss* boss = dynamic_cast<Boss*>(enemy.get());
+
+        // NẾU 'enemy' KHÔNG PHẢI LÀ BOSS (tức là Skeleton, Goblin...)
+        if (!boss) {
+            // ... thì mới chạy logic "chạm là mất máu" (Hộp Đỏ)
+            sf::FloatRect enemyBounds = enemy->getBounds(); 
+            if (playerBounds.intersects(enemyBounds)) {
+                player->takeDamage(); 
+            }
         }
     }
     
@@ -663,9 +681,26 @@ void Game::renderPlaying() {
     window.setView(camera);
     window.draw(background);
     for (const auto& platform : platforms) platform->draw(window);
-    for (const auto& enemy : enemies) enemy->draw(window);
+    
+    for (const auto& enemy : enemies) {
+        enemy->draw(window); 
+    }
+
     for (const auto& item : items) item->draw(window);
-    if(player) player->draw(window);
+    
+    if(player) {
+        player->draw(window);
+        
+        // [TÙY CHỌN] Nếu bạn vẫn muốn thấy hitbox Player:
+        sf::RectangleShape playerDebugHitbox;
+        playerDebugHitbox.setFillColor(sf::Color::Transparent);
+        playerDebugHitbox.setOutlineColor(sf::Color::Green); // Màu xanh
+        playerDebugHitbox.setOutlineThickness(2.f);
+        sf::FloatRect playerBounds = player->getHitbox(); 
+        playerDebugHitbox.setSize(sf::Vector2f(playerBounds.width, playerBounds.height));
+        playerDebugHitbox.setPosition(playerBounds.left, playerBounds.top);
+        window.draw(playerDebugHitbox);
+    }
     
     window.setView(uiView);
     float heartX = 10.f; float heartY = 10.f;

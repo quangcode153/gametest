@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
+#include "Enemies/Boss.hpp"
 
 class Player;
 class Platform;
