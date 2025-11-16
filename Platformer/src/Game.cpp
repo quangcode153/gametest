@@ -32,10 +32,18 @@ Game::Game() :
 {
     window.create(sf::VideoMode(1200, 800), "game test");
     window.setFramerateLimit(60);
-    camera.setSize(1200.f, 800.f); camera.setCenter(600.f, 400.f);
-    uiView.setSize(1200.f, 800.f); uiView.setCenter(600.f, 400.f);
-    initialize();
+    
+    // Cài đặt Camera
+    camera.setSize(1200.f, 800.f);
+    camera.setCenter(600.f, 400.f);
+    camera.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f)); // <--- THÊM DÒNG NÀY
 
+    // Cài đặt UI View
+    uiView.setSize(1200.f, 800.f);
+    uiView.setCenter(600.f, 400.f);
+    uiView.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f)); // <--- THÊM DÒNG NÀY
+
+    initialize();
     player = std::make_unique<Player>();
 }
 
@@ -194,7 +202,9 @@ void Game::loadResources() {
         charSelectHelpText.setOrigin(bounds.width / 2.f, bounds.height / 2.f);
         charSelectHelpText.setPosition(600.f, 700.f);
 
-    } else {
+    }
+    
+    else {
         std::cerr << "✗ UI Texts NOT initialized due to font loading failure.\n";
     }
 
@@ -278,17 +288,22 @@ void Game::loadLevel(int levelNumber) {
     else if (levelNumber == 2) bgPath = "assets/background2.png";
     else if (levelNumber == 3) bgPath = "assets/background3.png";
     else if (levelNumber == 4) bgPath = "assets/background4.png";
+    
     else bgPath = "assets/background.png";
 
     if (!backgroundTexture.loadFromFile(bgPath)) {
         std::cerr << "!!! LOI: Khong tai duoc background cho level: " << bgPath << std::endl;
     } else {
         std::cout << "✓ Background for level " << levelNumber << " loaded: " << bgPath << "\n";
+
         background.setTexture(backgroundTexture);
         sf::Vector2u bgSize = backgroundTexture.getSize();
         float scaleX = 2400.f / bgSize.x;
         float scaleY = 800.f / bgSize.y;
-        background.setScale(scaleX, scaleY);
+        float scale = std::max(scaleX, scaleY); // Lấy tỷ lệ lớn nhất
+        background.setScale(scale, scale);
+        background.setOrigin(bgSize.x / 2.f, bgSize.y / 2.f);
+        background.setPosition(2400.f / 2.f, 800.f / 2.f);
     }
 
     std::string levelPath = "assets/levels/level" + std::to_string(levelNumber) + ".txt";
@@ -306,8 +321,9 @@ void Game::loadLevel(int levelNumber) {
     else if (levelNumber == 2) platformTexturePath = "assets/ground_forest2.png";
     else if (levelNumber == 3) platformTexturePath = "assets/ground_forest3.jpg";
     else if (levelNumber == 4) platformTexturePath = "assets/ground_forest4.jpg";
+    
     else platformTexturePath = "assets/ground_forest.png";
-
+    
     std::string enemyTexturePath = "assets/npc.png";
 
     std::string line;
@@ -690,16 +706,6 @@ void Game::renderPlaying() {
     
     if(player) {
         player->draw(window);
-        
-        // [TÙY CHỌN] Nếu bạn vẫn muốn thấy hitbox Player:
-        sf::RectangleShape playerDebugHitbox;
-        playerDebugHitbox.setFillColor(sf::Color::Transparent);
-        playerDebugHitbox.setOutlineColor(sf::Color::Green); // Màu xanh
-        playerDebugHitbox.setOutlineThickness(2.f);
-        sf::FloatRect playerBounds = player->getHitbox(); 
-        playerDebugHitbox.setSize(sf::Vector2f(playerBounds.width, playerBounds.height));
-        playerDebugHitbox.setPosition(playerBounds.left, playerBounds.top);
-        window.draw(playerDebugHitbox);
     }
     
     window.setView(uiView);

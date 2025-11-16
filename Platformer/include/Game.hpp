@@ -122,6 +122,7 @@ private:
     sf::Sprite spriteMusicButton; 
     sf::Texture texBackArrow;       
     sf::Sprite spriteBackArrow;
+    sf::Text backToMenuText;
    
     void updateCharacterSelection(float deltaTime);
     void renderCharacterSelection();
